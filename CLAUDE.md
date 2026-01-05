@@ -11,6 +11,7 @@ Simple deployment platform. Docker-only, single-user.
 ```bash
 bun run dev          # start dev server
 bun run build        # production build
+bun run db:gen       # regenerate db types (run after schema changes)
 ```
 
 ## Test locally
@@ -39,6 +40,8 @@ curl localhost:3000/api/deployments/{id}
 SQLite at `data/frost.db`. Auto-migrates on startup.
 
 Tables: `projects`, `deployments`
+
+Types in `src/lib/db-types.ts` are auto-generated. Never modify manually.
 
 ## Deploy flow
 1. Clone repo

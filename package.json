@@ -10,7 +10,7 @@
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
-    "db:gen": "kysely-gen --url file:./data/frost.db --dialect sqlite --out ./src/lib/db-types.ts"
+    "db:gen": "node ./node_modules/.bin/kysely-gen --url ./data/frost.db --dialect sqlite --out ./src/lib/db-types.ts"
   },
   "dependencies": {
     "@radix-ui/react-label": "^2.1.8",
@@ -37,7 +37,7 @@
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "kysely-gen": "latest",
+    "kysely-gen": "^0.9.1",
     "postcss": "^8",
     "tailwindcss": "^4.1.18",
     "typescript": "^5.7.2"

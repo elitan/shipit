@@ -2,8 +2,10 @@ import { exec } from "node:child_process";
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { promisify } from "node:util";
+import type { Selectable } from "kysely";
 import { nanoid } from "nanoid";
 import { db } from "./db";
+import type { Project } from "./db-types";
 import {
   buildImage,
   getAvailablePort,
@@ -12,7 +14,7 @@ import {
   stopContainer,
   waitForHealthy,
 } from "./docker";
-import type { DeployType, EnvVar } from "./types";
+import type { EnvVar } from "./types";
 
 const execAsync = promisify(exec);
 
@@ -94,17 +96,7 @@ export async function deploy(projectId: string): Promise<string> {
 
 async function runDeployment(
   deploymentId: string,
-  project: {
-    id: string;
-    name: string;
-    repo_url: string | null;
-    branch: string | null;
-    dockerfile_path: string | null;
-    port: number;
-    env_vars: string;
-    image_url: string | null;
-    deploy_type: DeployType;
-  },
+  project: Selectable<Project>,
 ) {
   const containerName = `frost-${project.id}`.toLowerCase();
 

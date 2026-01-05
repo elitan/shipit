@@ -28,7 +28,7 @@
         "@types/node": "^22",
         "@types/react": "^19",
         "@types/react-dom": "^19",
-        "kysely-gen": "latest",
+        "kysely-gen": "^0.9.1",
         "postcss": "^8",
         "tailwindcss": "^4.1.18",
         "typescript": "^5.7.2",
@@ -266,7 +266,7 @@
 
     "kysely-bun-sqlite": ["kysely-bun-sqlite@0.4.0", "", { "dependencies": { "bun-types": "^1.1.31" }, "peerDependencies": { "kysely": "^0.28.2" } }, "sha512-2EkQE5sT4ewiw7IWfJsAkpxJ/QPVKXKO5sRYI/xjjJIJlECuOdtG+ssYM0twZJySrdrmuildNPFYVreyu1EdZg=="],
 
-    "kysely-gen": ["kysely-gen@0.9.0", "", { "dependencies": { "chalk": "^5.6.2", "commander": "^14.0.2", "kysely": "^0.27.4", "micromatch": "^4.0.8", "ora": "^9.0.0", "pg": "^8.16.3" }, "peerDependencies": { "better-sqlite3": ">=9.0.0 <13.0.0", "mysql2": ">=3.0.0 <4.0.0", "tarn": ">=3.0.0 <4.0.0", "tedious": ">=16.0.0 <19.0.0" }, "optionalPeers": ["better-sqlite3", "mysql2", "tarn", "tedious"], "bin": { "kysely-gen": "dist/cli.js" } }, "sha512-sYJxiD3shHKp28TZI67tpxPZYhXyk6PFQcG48MiPmI3N7XXdd+D4cT2vhI38zEuCI84PQ8oqQPlnapetFYknTg=="],
+    "kysely-gen": ["kysely-gen@0.9.1", "", { "dependencies": { "chalk": "^5.6.2", "commander": "^14.0.2", "kysely": "^0.27.4", "micromatch": "^4.0.8", "ora": "^9.0.0", "pg": "^8.16.3" }, "peerDependencies": { "better-sqlite3": ">=9.0.0 <13.0.0", "mysql2": ">=3.0.0 <4.0.0", "tarn": ">=3.0.0 <4.0.0", "tedious": ">=16.0.0 <19.0.0" }, "optionalPeers": ["better-sqlite3", "mysql2", "tarn", "tedious"], "bin": { "kysely-gen": "dist/cli.js" } }, "sha512-FesfYdCsCa74eveHaZ2UU/Te3F5kDTwjsiz359JHUnVXA16zkSAs0w6CxcGKGVjSNnZXDuKopem+caOSApSIZw=="],
 
     "lightningcss": ["lightningcss@1.30.2", "", { "dependencies": { "detect-libc": "^2.0.3" }, "optionalDependencies": { "lightningcss-android-arm64": "1.30.2", "lightningcss-darwin-arm64": "1.30.2", "lightningcss-darwin-x64": "1.30.2", "lightningcss-freebsd-x64": "1.30.2", "lightningcss-linux-arm-gnueabihf": "1.30.2", "lightningcss-linux-arm64-gnu": "1.30.2", "lightningcss-linux-arm64-musl": "1.30.2", "lightningcss-linux-x64-gnu": "1.30.2", "lightningcss-linux-x64-musl": "1.30.2", "lightningcss-win32-arm64-msvc": "1.30.2", "lightningcss-win32-x64-msvc": "1.30.2" } }, "sha512-utfs7Pr5uJyyvDETitgsaqSyjCb2qNRAtuqUeWIAKztsOYdcACf2KtARYXg2pSvhkt+9NfoaNY7fxjl6nuMjIQ=="],
 
