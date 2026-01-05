@@ -3,14 +3,18 @@ export interface EnvVar {
   value: string;
 }
 
+export type DeployType = "repo" | "image";
+
 export interface ProjectsTable {
   id: string;
   name: string;
-  repo_url: string;
-  branch: string;
-  dockerfile_path: string;
+  repo_url: string | null;
+  branch: string | null;
+  dockerfile_path: string | null;
   port: number;
   env_vars: string;
+  image_url: string | null;
+  deploy_type: DeployType;
   created_at: number;
 }
 

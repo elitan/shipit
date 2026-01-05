@@ -31,9 +31,11 @@ interface EnvVar {
 interface Project {
   id: string;
   name: string;
-  repo_url: string;
-  branch: string;
-  dockerfile_path: string;
+  deploy_type: "repo" | "image";
+  repo_url: string | null;
+  branch: string | null;
+  dockerfile_path: string | null;
+  image_url: string | null;
   port: number;
   env_vars: string;
   deployments: Deployment[];
@@ -161,7 +163,9 @@ export default function ProjectPage() {
             {project.name}
           </h1>
           <p className="mt-1 font-mono text-sm text-neutral-500">
-            {project.repo_url}
+            {project.deploy_type === "image"
+              ? project.image_url
+              : project.repo_url}
           </p>
         </div>
         <div className="flex gap-2">
@@ -278,18 +282,29 @@ export default function ProjectPage() {
         </CardHeader>
         <CardContent>
           <dl className="grid grid-cols-3 gap-4 text-sm">
-            <div>
-              <dt className="text-neutral-500">Branch</dt>
-              <dd className="mt-1 font-mono text-neutral-300">
-                {project.branch}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-neutral-500">Dockerfile</dt>
-              <dd className="mt-1 font-mono text-neutral-300">
-                {project.dockerfile_path}
-              </dd>
-            </div>
+            {project.deploy_type === "repo" ? (
+              <>
+                <div>
+                  <dt className="text-neutral-500">Branch</dt>
+                  <dd className="mt-1 font-mono text-neutral-300">
+                    {project.branch}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-neutral-500">Dockerfile</dt>
+                  <dd className="mt-1 font-mono text-neutral-300">
+                    {project.dockerfile_path}
+                  </dd>
+                </div>
+              </>
+            ) : (
+              <div>
+                <dt className="text-neutral-500">Image</dt>
+                <dd className="mt-1 font-mono text-neutral-300">
+                  {project.image_url}
+                </dd>
+              </div>
+            )}
             <div>
               <dt className="text-neutral-500">Container Port</dt>
               <dd className="mt-1 font-mono text-neutral-300">

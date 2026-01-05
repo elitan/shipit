@@ -62,6 +62,38 @@ export async function buildImage(
   });
 }
 
+export async function pullImage(imageName: string): Promise<BuildResult> {
+  return new Promise((resolve) => {
+    let log = "";
+    const proc = spawn("docker", ["pull", imageName]);
+
+    proc.stdout.on("data", (data) => {
+      log += data.toString();
+    });
+
+    proc.stderr.on("data", (data) => {
+      log += data.toString();
+    });
+
+    proc.on("close", (code) => {
+      if (code === 0) {
+        resolve({ success: true, imageName, log });
+      } else {
+        resolve({
+          success: false,
+          imageName,
+          log,
+          error: `Pull exited with code ${code}`,
+        });
+      }
+    });
+
+    proc.on("error", (err) => {
+      resolve({ success: false, imageName, log, error: err.message });
+    });
+  });
+}
+
 export async function runContainer(
   imageName: string,
   hostPort: number,

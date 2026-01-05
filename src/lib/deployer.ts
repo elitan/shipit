@@ -4,14 +4,15 @@ import { join } from "node:path";
 import { promisify } from "node:util";
 import { nanoid } from "nanoid";
 import { db } from "./db";
-import type { EnvVar } from "./db-types";
 import {
   buildImage,
   getAvailablePort,
+  pullImage,
   runContainer,
   stopContainer,
   waitForHealthy,
 } from "./docker";
+import type { DeployType, EnvVar } from "./types";
 
 const execAsync = promisify(exec);
 
@@ -24,6 +25,7 @@ if (!existsSync(REPOS_PATH)) {
 export type DeploymentStatus =
   | "pending"
   | "cloning"
+  | "pulling"
   | "building"
   | "deploying"
   | "running"
@@ -95,14 +97,15 @@ async function runDeployment(
   project: {
     id: string;
     name: string;
-    repo_url: string;
-    branch: string;
-    dockerfile_path: string;
+    repo_url: string | null;
+    branch: string | null;
+    dockerfile_path: string | null;
     port: number;
     env_vars: string;
+    image_url: string | null;
+    deploy_type: DeployType;
   },
 ) {
-  const repoPath = join(REPOS_PATH, project.id);
   const containerName = `frost-${project.id}`.toLowerCase();
 
   const envVarsList: EnvVar[] = project.env_vars
@@ -114,55 +117,87 @@ async function runDeployment(
   }
 
   try {
-    await updateDeployment(deploymentId, { status: "cloning" });
-    await appendLog(deploymentId, `Cloning ${project.repo_url}...\n`);
+    let imageName: string;
 
-    if (existsSync(repoPath)) {
-      rmSync(repoPath, { recursive: true, force: true });
-    }
+    if (project.deploy_type === "image") {
+      if (!project.image_url) {
+        throw new Error("Image URL is required for image deployments");
+      }
+      imageName = project.image_url;
+      const imageTag = imageName.split(":")[1] || "latest";
 
-    const { stdout: cloneResult } = await execAsync(
-      `git clone --depth 1 --branch ${project.branch} ${project.repo_url} ${repoPath}`,
-    );
-    await appendLog(deploymentId, cloneResult || "Cloned successfully\n");
+      await updateDeployment(deploymentId, { status: "pulling" });
+      await appendLog(deploymentId, `Pulling image ${imageName}...\n`);
 
-    const { stdout: commitResult } = await execAsync(
-      `git -C ${repoPath} rev-parse HEAD`,
-    );
-    const commitSha = commitResult.trim().substring(0, 7);
+      const pullResult = await pullImage(imageName);
+      await appendLog(deploymentId, pullResult.log);
 
-    await db
-      .updateTable("deployments")
-      .set({ commit_sha: commitSha })
-      .where("id", "=", deploymentId)
-      .execute();
+      if (!pullResult.success) {
+        throw new Error(pullResult.error || "Pull failed");
+      }
 
-    if (envVarsList.length > 0) {
-      const envFileContent = envVarsList
-        .map((e) => `${e.key}=${e.value}`)
-        .join("\n");
-      writeFileSync(join(repoPath, ".env"), envFileContent);
-      await appendLog(
-        deploymentId,
-        `Written ${envVarsList.length} env vars to .env\n`,
+      await db
+        .updateTable("deployments")
+        .set({ commit_sha: imageTag })
+        .where("id", "=", deploymentId)
+        .execute();
+    } else {
+      if (!project.repo_url || !project.branch || !project.dockerfile_path) {
+        throw new Error("Repo URL, branch, and Dockerfile path are required");
+      }
+
+      const repoPath = join(REPOS_PATH, project.id);
+
+      await updateDeployment(deploymentId, { status: "cloning" });
+      await appendLog(deploymentId, `Cloning ${project.repo_url}...\n`);
+
+      if (existsSync(repoPath)) {
+        rmSync(repoPath, { recursive: true, force: true });
+      }
+
+      const { stdout: cloneResult } = await execAsync(
+        `git clone --depth 1 --branch ${project.branch} ${project.repo_url} ${repoPath}`,
       );
-    }
+      await appendLog(deploymentId, cloneResult || "Cloned successfully\n");
 
-    await updateDeployment(deploymentId, { status: "building" });
-    await appendLog(deploymentId, `\nBuilding image...\n`);
+      const { stdout: commitResult } = await execAsync(
+        `git -C ${repoPath} rev-parse HEAD`,
+      );
+      const commitSha = commitResult.trim().substring(0, 7);
 
-    const imageName = `frost-${project.id}:${commitSha}`.toLowerCase();
-    const buildResult = await buildImage(
-      repoPath,
-      imageName,
-      project.dockerfile_path,
-      envVars,
-    );
+      await db
+        .updateTable("deployments")
+        .set({ commit_sha: commitSha })
+        .where("id", "=", deploymentId)
+        .execute();
 
-    await appendLog(deploymentId, buildResult.log);
+      if (envVarsList.length > 0) {
+        const envFileContent = envVarsList
+          .map((e) => `${e.key}=${e.value}`)
+          .join("\n");
+        writeFileSync(join(repoPath, ".env"), envFileContent);
+        await appendLog(
+          deploymentId,
+          `Written ${envVarsList.length} env vars to .env\n`,
+        );
+      }
 
-    if (!buildResult.success) {
-      throw new Error(buildResult.error || "Build failed");
+      await updateDeployment(deploymentId, { status: "building" });
+      await appendLog(deploymentId, `\nBuilding image...\n`);
+
+      imageName = `frost-${project.id}:${commitSha}`.toLowerCase();
+      const buildResult = await buildImage(
+        repoPath,
+        imageName,
+        project.dockerfile_path,
+        envVars,
+      );
+
+      await appendLog(deploymentId, buildResult.log);
+
+      if (!buildResult.success) {
+        throw new Error(buildResult.error || "Build failed");
+      }
     }
 
     await updateDeployment(deploymentId, { status: "deploying" });

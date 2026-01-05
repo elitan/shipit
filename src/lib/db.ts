@@ -39,14 +39,23 @@ function runMigrations() {
   const columns = sqlite.prepare("PRAGMA table_info(projects)").all() as Array<{
     name: string;
   }>;
-  const hasEnvVars = columns.some((c) => c.name === "env_vars");
+  const columnNames = columns.map((c) => c.name);
 
-  if (!hasEnvVars) {
+  if (!columnNames.includes("env_vars")) {
     const schema002 = join(process.cwd(), "schema", "002-env-vars.sql");
     if (existsSync(schema002)) {
       const schema = readFileSync(schema002, "utf-8");
       sqlite.exec(schema);
       console.log("Applied 002-env-vars migration");
+    }
+  }
+
+  if (!columnNames.includes("deploy_type")) {
+    const schema003 = join(process.cwd(), "schema", "003-image-deploy.sql");
+    if (existsSync(schema003)) {
+      const schema = readFileSync(schema003, "utf-8");
+      sqlite.exec(schema);
+      console.log("Applied 003-image-deploy migration");
     }
   }
 }

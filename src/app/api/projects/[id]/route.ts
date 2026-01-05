@@ -50,14 +50,24 @@ export async function PATCH(
   if (body.env_vars !== undefined) {
     updates.env_vars = JSON.stringify(body.env_vars);
   }
-  if (body.branch !== undefined) {
-    updates.branch = body.branch;
-  }
-  if (body.dockerfile_path !== undefined) {
-    updates.dockerfile_path = body.dockerfile_path;
-  }
   if (body.port !== undefined) {
     updates.port = body.port;
+  }
+  if (project.deploy_type === "repo") {
+    if (body.branch !== undefined) {
+      updates.branch = body.branch;
+    }
+    if (body.dockerfile_path !== undefined) {
+      updates.dockerfile_path = body.dockerfile_path;
+    }
+    if (body.repo_url !== undefined) {
+      updates.repo_url = body.repo_url;
+    }
+  }
+  if (project.deploy_type === "image") {
+    if (body.image_url !== undefined) {
+      updates.image_url = body.image_url;
+    }
   }
 
   if (Object.keys(updates).length > 0) {
