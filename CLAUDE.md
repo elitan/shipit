@@ -1,9 +1,9 @@
-# Shipit
+# Frost
 
 Simple deployment platform. Docker-only, single-user.
 
 ## Stack
-- Bun + Next.js 15.1
+- Bun + Next.js 16
 - SQLite + Kysely
 - Tailwind + shadcn/ui
 
@@ -36,7 +36,7 @@ curl localhost:3000/api/deployments/{id}
 - `test/fixtures/` - test apps with Dockerfiles
 
 ## Database
-SQLite at `data/shipit.db`. Auto-migrates on startup.
+SQLite at `data/frost.db`. Auto-migrates on startup.
 
 Tables: `projects`, `deployments`
 
@@ -48,6 +48,8 @@ Tables: `projects`, `deployments`
 5. Health check
 
 ## Conventions
-- Image names lowercase: `shipit-{projectid}:{sha}`
-- Container names: `shipit-{projectid}`
+- Image names lowercase: `frost-{projectid}:{sha}`
+- Container names: `frost-{projectid}`
 - Host ports: 10000-20000 range
+- Page-specific components in `_components/` folder next to page.tsx
+- Shared components in `src/components/`

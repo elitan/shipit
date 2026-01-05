@@ -1,4 +1,4 @@
-# Shipit
+# Frost
 
 Simple deployment platform. Docker-only, single-user.
 

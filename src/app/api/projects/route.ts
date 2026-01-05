@@ -4,7 +4,25 @@ import { db } from "@/lib/db";
 
 export async function GET() {
   const projects = await db.selectFrom("projects").selectAll().execute();
-  return NextResponse.json(projects);
+
+  const projectsWithStatus = await Promise.all(
+    projects.map(async (project) => {
+      const latestDeployment = await db
+        .selectFrom("deployments")
+        .select("status")
+        .where("project_id", "=", project.id)
+        .orderBy("created_at", "desc")
+        .limit(1)
+        .executeTakeFirst();
+
+      return {
+        ...project,
+        latestStatus: latestDeployment?.status,
+      };
+    }),
+  );
+
+  return NextResponse.json(projectsWithStatus);
 }
 
 export async function POST(request: Request) {

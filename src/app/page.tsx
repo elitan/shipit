@@ -1,41 +1,75 @@
+"use client";
+
+import { Plus, Rocket } from "lucide-react";
 import Link from "next/link";
-import { db } from "@/lib/db";
+import { useEffect, useState } from "react";
+import { EmptyState } from "@/components/empty-state";
+import { Button } from "@/components/ui/button";
+import { ProjectCard } from "./_components/project-card";
+import { SkeletonCard } from "./_components/skeleton-card";
 
-export const dynamic = "force-dynamic";
+interface Project {
+  id: string;
+  name: string;
+  repo_url: string;
+  branch: string;
+  port: number;
+  latestStatus?: string;
+}
 
-export default async function Home() {
-  const projects = await db.selectFrom("projects").selectAll().execute();
+export default function Home() {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchProjects() {
+      const res = await fetch("/api/projects");
+      if (res.ok) {
+        const data = await res.json();
+        setProjects(data);
+      }
+      setLoading(false);
+    }
+    fetchProjects();
+  }, []);
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold">Projects</h1>
-        <Link
-          href="/projects/new"
-          className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90"
-        >
-          New Project
-        </Link>
+      <div className="mb-8 flex items-center justify-between">
+        <h1 className="text-lg font-medium">Projects</h1>
+        <Button asChild size="sm">
+          <Link href="/projects/new">
+            <Plus className="mr-1.5 h-4 w-4" />
+            New Project
+          </Link>
+        </Button>
       </div>
 
-      {projects.length === 0 ? (
-        <p className="text-muted-foreground">No projects yet.</p>
+      {loading ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+      ) : projects.length === 0 ? (
+        <EmptyState
+          icon={Rocket}
+          title="No projects yet"
+          description="Deploy your first application"
+          action={{ label: "New Project", href: "/projects/new" }}
+        />
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {projects.map((project) => (
-            <Link
+            <ProjectCard
               key={project.id}
-              href={`/projects/${project.id}`}
-              className="block p-4 border rounded-lg hover:border-primary"
-            >
-              <h2 className="font-semibold">{project.name}</h2>
-              <p className="text-sm text-muted-foreground">
-                {project.repo_url}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {project.branch} · port {project.port}
-              </p>
-            </Link>
+              id={project.id}
+              name={project.name}
+              repoUrl={project.repo_url}
+              branch={project.branch}
+              port={project.port}
+              status={project.latestStatus}
+            />
           ))}
         </div>
       )}

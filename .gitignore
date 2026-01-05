@@ -38,7 +38,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 
-# shipit data
+# frost data
 /data/
 /repos/
 

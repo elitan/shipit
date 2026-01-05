@@ -101,7 +101,7 @@ async function runDeployment(
   },
 ) {
   const repoPath = join(REPOS_PATH, project.id);
-  const containerName = `shipit-${project.id}`.toLowerCase();
+  const containerName = `frost-${project.id}`.toLowerCase();
 
   try {
     await updateDeployment(deploymentId, { status: "cloning" });
@@ -130,7 +130,7 @@ async function runDeployment(
     await updateDeployment(deploymentId, { status: "building" });
     await appendLog(deploymentId, `\nBuilding image...\n`);
 
-    const imageName = `shipit-${project.id}:${commitSha}`.toLowerCase();
+    const imageName = `frost-${project.id}:${commitSha}`.toLowerCase();
     const buildResult = await buildImage(
       repoPath,
       imageName,

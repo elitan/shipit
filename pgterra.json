@@ -1,5 +1,5 @@
 {
-  "database": "./data/shipit.db",
+  "database": "./data/frost.db",
   "driver": "sqlite",
   "schema": "./schema"
 }

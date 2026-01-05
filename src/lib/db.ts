@@ -4,7 +4,7 @@ import Database from "better-sqlite3";
 import { Kysely, SqliteDialect } from "kysely";
 import type { DB } from "./db-types";
 
-const DB_PATH = join(process.cwd(), "data", "shipit.db");
+const DB_PATH = join(process.cwd(), "data", "frost.db");
 
 if (!existsSync(join(process.cwd(), "data"))) {
   mkdirSync(join(process.cwd(), "data"), { recursive: true });
