@@ -115,3 +115,8 @@ Types in `src/lib/db-types.ts` are auto-generated. Never modify manually.
 - `chore: update deps` - maintenance
 
 Keep messages short (<50 chars title). Body optional for context.
+
+**Releases** - create with commit list as notes:
+```bash
+gh release create v0.1.11 --notes "$(git log --oneline v0.1.10..HEAD)"
+```
