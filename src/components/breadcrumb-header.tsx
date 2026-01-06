@@ -1,3 +1,4 @@
+import { Settings } from "lucide-react";
 import Link from "next/link";
 import { FrostLogo } from "./frost-logo";
 
@@ -38,6 +39,15 @@ export function BreadcrumbHeader({ items }: BreadcrumbHeaderProps) {
             )}
           </div>
         ))}
+        <div className="ml-auto">
+          <Link
+            href="/settings"
+            className="text-neutral-400 transition-colors hover:text-neutral-100"
+            title="Settings"
+          >
+            <Settings className="h-5 w-5" />
+          </Link>
+        </div>
       </div>
     </header>
   );

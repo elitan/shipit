@@ -24,10 +24,8 @@ if [ "$(uname)" != "Linux" ]; then
   exit 1
 fi
 
-# Prompt for configuration
+# Prompt for admin password
 echo -e "${YELLOW}Configuration${NC}"
-read -p "Domain (e.g. frost.example.com): " FROST_DOMAIN
-read -p "Email (for SSL certificates): " FROST_EMAIL
 read -s -p "Admin password (min 8 chars): " FROST_PASSWORD
 echo ""
 
@@ -95,8 +93,6 @@ fi
 
 # Create .env file
 cat > "$FROST_DIR/.env" << EOF
-FROST_DOMAIN=$FROST_DOMAIN
-FROST_EMAIL=$FROST_EMAIL
 FROST_JWT_SECRET=$FROST_JWT_SECRET
 NODE_ENV=production
 EOF
@@ -112,16 +108,6 @@ bun run build
 echo "Setting admin password..."
 bun run setup "$FROST_PASSWORD"
 
-# Configure Caddy
-echo ""
-echo -e "${YELLOW}Configuring Caddy...${NC}"
-
-cat > /etc/caddy/Caddyfile << EOF
-$FROST_DOMAIN {
-    reverse_proxy localhost:3000
-}
-EOF
-
 # Create systemd service
 echo ""
 echo -e "${YELLOW}Creating systemd service...${NC}"
@@ -129,14 +115,14 @@ echo -e "${YELLOW}Creating systemd service...${NC}"
 cat > /etc/systemd/system/frost.service << EOF
 [Unit]
 Description=Frost
-After=network.target docker.service
+After=network.target docker.service caddy.service
 
 [Service]
 Type=simple
 WorkingDirectory=$FROST_DIR
 ExecStart=$HOME/.bun/bin/bun run start
 Restart=on-failure
-Environment=NODE_ENV=production
+EnvironmentFile=$FROST_DIR/.env
 
 [Install]
 WantedBy=multi-user.target
@@ -146,12 +132,18 @@ EOF
 systemctl daemon-reload
 systemctl enable frost
 systemctl restart frost
-systemctl reload caddy
+
+# Get server IP
+SERVER_IP=$(curl -s ifconfig.me || curl -s api.ipify.org || echo "YOUR_SERVER_IP")
 
 echo ""
 echo -e "${GREEN}Installation complete!${NC}"
 echo ""
-echo -e "Frost is now running at: ${GREEN}https://$FROST_DOMAIN${NC}"
+echo -e "Frost is running at: ${GREEN}http://$SERVER_IP:3000${NC}"
+echo ""
+echo "Next steps:"
+echo "  1. Point your domain to $SERVER_IP"
+echo "  2. Go to Settings in Frost to configure SSL"
 echo ""
 echo "Useful commands:"
 echo "  systemctl status frost    - check status"
