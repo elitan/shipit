@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SettingCard } from "./setting-card";
 
 interface UpdateInfo {
   currentVersion: string;
@@ -21,7 +21,7 @@ interface UpdateInfo {
   lastCheck: number | null;
 }
 
-export function UpdateCard() {
+export function SystemSection() {
   const [status, setStatus] = useState<UpdateInfo | null>(null);
   const [checking, setChecking] = useState(false);
   const [applying, setApplying] = useState(false);
@@ -88,65 +88,65 @@ export function UpdateCard() {
   }
 
   return (
-    <Card className="border-neutral-800 bg-neutral-900">
-      <CardHeader>
-        <CardTitle className="text-lg font-medium text-neutral-100">
-          System Updates
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <SettingCard
+      title="System"
+      description="Check for updates and manage your Frost installation."
+      learnMoreUrl={status?.htmlUrl || undefined}
+      learnMoreText="View release notes"
+      footer={
+        status?.availableVersion ? (
+          <Button onClick={handleApply} disabled={applying}>
+            {applying ? (
+              <>
+                <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                Updating...
+              </>
+            ) : (
+              "Update Now"
+            )}
+          </Button>
+        ) : (
+          <Button variant="secondary" onClick={handleCheck} disabled={checking}>
+            {checking ? (
+              <>
+                <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                Checking...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="mr-1.5 h-4 w-4" />
+                Check for Updates
+              </>
+            )}
+          </Button>
+        )
+      }
+    >
+      <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <div className="space-y-1">
+          <div>
             <p className="text-sm text-neutral-400">Current Version</p>
             <p className="text-lg font-medium text-neutral-100">
               v{status?.currentVersion || "..."}
             </p>
           </div>
-          <div className="text-right">
-            <p className="text-xs text-neutral-500">
-              Last checked: {formatLastCheck(status?.lastCheck ?? null)}
-            </p>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleCheck}
-              disabled={checking}
-              className="mt-1 h-7 px-2 text-xs"
-            >
-              {checking ? (
-                <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-              ) : (
-                <RefreshCw className="mr-1 h-3 w-3" />
-              )}
-              Check Now
-            </Button>
-          </div>
+          <p className="text-xs text-neutral-500">
+            Last checked: {formatLastCheck(status?.lastCheck ?? null)}
+          </p>
         </div>
 
         {status?.availableVersion && (
           <div className="rounded-lg border border-blue-800 bg-blue-900/20 p-4">
-            <div>
+            <div className="flex items-center justify-between">
               <p className="font-medium text-blue-400">
                 Update Available: v{status.availableVersion}
               </p>
               {status.publishedAt && (
-                <p className="mt-1 text-xs text-neutral-400">
+                <p className="text-xs text-neutral-400">
                   Released {formatPublishedAt(status.publishedAt)}
                 </p>
               )}
             </div>
-
-            {status.htmlUrl && (
-              <a
-                href={status.htmlUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-3 flex items-center gap-1.5 text-sm text-neutral-400 hover:text-neutral-200"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-                View release notes
-              </a>
-            )}
 
             {status.hasMigrations && (
               <div className="mt-3 flex items-start gap-2 rounded bg-yellow-900/30 p-2 text-yellow-400">
@@ -157,21 +157,6 @@ export function UpdateCard() {
                 </p>
               </div>
             )}
-
-            <Button
-              onClick={handleApply}
-              disabled={applying}
-              className="mt-4 w-full"
-            >
-              {applying ? (
-                <>
-                  <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
-                  Updating...
-                </>
-              ) : (
-                "Update Now"
-              )}
-            </Button>
           </div>
         )}
 
@@ -183,7 +168,7 @@ export function UpdateCard() {
         )}
 
         {error && <p className="text-sm text-red-400">{error}</p>}
-      </CardContent>
-    </Card>
+      </div>
+    </SettingCard>
   );
 }
