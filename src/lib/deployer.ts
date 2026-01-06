@@ -16,6 +16,12 @@ import {
   waitForHealthy,
 } from "./docker";
 import { syncCaddyConfig } from "./domains";
+import {
+  generateInstallationToken,
+  hasGitHubApp,
+  injectTokenIntoUrl,
+  isGitHubRepo,
+} from "./github";
 import type { EnvVar } from "./types";
 
 const execAsync = promisify(exec);
@@ -189,8 +195,22 @@ async function runServiceDeployment(
         rmSync(repoPath, { recursive: true, force: true });
       }
 
+      let cloneUrl = service.repo_url;
+      if (isGitHubRepo(service.repo_url) && (await hasGitHubApp())) {
+        try {
+          const token = await generateInstallationToken();
+          cloneUrl = injectTokenIntoUrl(service.repo_url, token);
+          await appendLog(deploymentId, "Using GitHub App for authentication\n");
+        } catch (err: any) {
+          await appendLog(
+            deploymentId,
+            `Warning: GitHub App auth failed (${err.message}), trying without auth\n`,
+          );
+        }
+      }
+
       const { stdout: cloneResult } = await execAsync(
-        `git clone --depth 1 --branch ${service.branch} ${service.repo_url} ${repoPath}`,
+        `git clone --depth 1 --branch ${service.branch} ${cloneUrl} ${repoPath}`,
       );
       await appendLog(deploymentId, cloneResult || "Cloned successfully\n");
 

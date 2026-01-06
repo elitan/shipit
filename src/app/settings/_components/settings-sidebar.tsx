@@ -11,6 +11,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { id: "general", label: "General", href: "/settings" },
   { id: "domain", label: "Domain & SSL", href: "/settings/domain" },
+  { id: "github", label: "GitHub", href: "/settings/github" },
 ];
 
 interface SettingsSidebarProps {
