@@ -20,8 +20,8 @@ Services communicate via Docker network using service name as hostname.
 - IP: 65.21.180.49
 - Domain: frost.j4labs.se
 - SSH: `ssh root@65.21.180.49`
-- Install password: `hejsan`
-- Use staging SSL certificates to avoid Let's Encrypt rate limits
+- Install password: `hejsan123`
+- **Always enable "Use staging certificates" when setting up SSL** to avoid Let's Encrypt rate limits
 
 ## Stack
 - Bun + Next.js 16
