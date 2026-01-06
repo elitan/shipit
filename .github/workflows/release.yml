@@ -104,7 +104,7 @@ jobs:
 
             parsed=$(parse_msg "$msg")
 
-            if [[ "$msg" =~ ^[a-z]+(\([^)]+\))?!: ]] || [[ "$msg" =~ BREAKING ]]; then
+            if [[ "$msg" =~ !: ]] || [[ "$msg" =~ BREAKING ]]; then
               breaking="$breaking\n- $parsed"
             elif [[ "$msg" =~ ^feat ]]; then
               features="$features\n- $parsed"
