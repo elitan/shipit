@@ -45,7 +45,6 @@ fi
 
 echo -e "${YELLOW}Pulling latest changes...${NC}"
 git fetch origin main
-git checkout main
 git reset --hard origin/main
 
 echo -e "${YELLOW}Installing dependencies...${NC}"
