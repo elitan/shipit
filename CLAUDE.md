@@ -2,6 +2,20 @@
 
 Simple deployment platform. Docker-only, single-user.
 
+## Concepts
+
+**Project** - container for related services. Has project-level env vars inherited by all services.
+
+**Service** - deployable workload within a project. Two deploy types:
+- `repo`: builds from git repo (repo_url, branch, dockerfile_path)
+- `image`: pulls pre-built image (image_url)
+
+Services communicate via Docker network using service name as hostname.
+
+**Deployment** - immutable record of a service deployment. Status: pending → cloning/pulling → building → deploying → running/failed. Tracks container_id, host_port, build_log.
+
+**Settings** - key-value store for domain, email (Let's Encrypt), SSL config.
+
 ## Test VPS
 - IP: 65.21.180.49
 - Domain: frost.j4labs.se
@@ -44,21 +58,23 @@ curl localhost:3000/api/deployments/{id}
 ## Database
 SQLite at `data/frost.db`. Auto-migrates on startup.
 
-Tables: `projects`, `deployments`
+Tables: `projects`, `services`, `deployments`, `settings`
 
 Types in `src/lib/db-types.ts` are auto-generated. Never modify manually.
 
 ## Deploy flow
-1. Clone repo
-2. Docker build
-3. Stop old container
-4. Run new container
+1. Clone repo (repo type) or pull image (image type)
+2. Docker build with merged env vars (project + service)
+3. Create project network if needed
+4. Run new container on network (hostname = service name)
 5. Health check
+6. Stop previous deployment
 
 ## Conventions
 - Use bun, not node/npm/pnpm
-- Image names lowercase: `frost-{projectid}:{sha}`
-- Container names: `frost-{projectid}`
+- Image names: `frost-{serviceid}:{sha}`
+- Container names: `frost-{serviceid}`
+- Network names: `frost-net-{projectid}`
 - Host ports: 10000-20000 range
 - Page-specific components in `_components/` folder next to page.tsx
 - Shared components in `src/components/`
