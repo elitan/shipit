@@ -102,7 +102,7 @@ jobs:
             local text=$(echo "$msg" | sed -E 's/^[a-z]+(\([^)]+\))?!?: //' | sed 's/./\U&/')
 
             # Convert PR references (#123) to links
-            text=$(echo "$text" | sed -E "s/#([0-9]+)/[#\1](https:\/\/github.com\/$repo\/pull\/\1)/g")
+            text=$(echo "$text" | sed -E "s|#([0-9]+)|[#\1](https://github.com/$repo/pull/\1)|g")
 
             # Add commit link
             printf '%s ([`%s`](https://github.com/%s/commit/%s))' "$text" "$hash" "$repo" "$hash"
