@@ -163,8 +163,9 @@ export function injectTokenIntoUrl(repoUrl: string, token: string): string {
 
 export function buildManifest(domain: string): object {
   const baseUrl = `https://${domain}`;
+  const randomId = Math.random().toString(36).substring(2, 10);
   return {
-    name: `Frost-${domain.split(".")[0]}`,
+    name: `Frost-${randomId}`,
     url: baseUrl,
     hook_attributes: {
       url: `${baseUrl}/api/github/webhook`,
