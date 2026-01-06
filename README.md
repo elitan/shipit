@@ -16,7 +16,13 @@ Simple deployment platform. Docker-only, single-user.
 - Tailwind + shadcn/ui
 - Docker
 
-## Quick Start
+## Installation
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/elitan/frost/main/install.sh | sudo bash
+```
+
+## Local Development
 
 ```bash
 bun install
