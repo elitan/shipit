@@ -1,0 +1,125 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version bump type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Get current version
+        id: current
+        run: echo "version=$(jq -r .version package.json)" >> $GITHUB_OUTPUT
+
+      - name: Calculate new version
+        id: new
+        run: |
+          current="${{ steps.current.outputs.version }}"
+          IFS='.' read -r major minor patch <<< "$current"
+
+          case "${{ inputs.version }}" in
+            major)
+              major=$((major + 1))
+              minor=0
+              patch=0
+              ;;
+            minor)
+              minor=$((minor + 1))
+              patch=0
+              ;;
+            patch)
+              patch=$((patch + 1))
+              ;;
+          esac
+
+          echo "version=$major.$minor.$patch" >> $GITHUB_OUTPUT
+
+      - name: Update package.json
+        run: |
+          jq '.version = "${{ steps.new.outputs.version }}"' package.json > tmp.json
+          mv tmp.json package.json
+
+      - name: Commit version bump
+        run: |
+          git add package.json
+          git commit -m "chore: bump version to ${{ steps.new.outputs.version }}"
+          git push
+
+      - name: Create and push tag
+        run: |
+          git tag "v${{ steps.new.outputs.version }}"
+          git push origin "v${{ steps.new.outputs.version }}"
+
+      - name: Generate release notes
+        id: notes
+        run: |
+          # Get commits since last tag
+          last_tag=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
+          if [ -z "$last_tag" ]; then
+            commits=$(git log --pretty=format:"%s" --no-merges)
+          else
+            commits=$(git log --pretty=format:"%s" --no-merges "$last_tag"..HEAD^)
+          fi
+
+          # Group by type
+          features=""
+          fixes=""
+          other=""
+
+          while IFS= read -r msg; do
+            [ -z "$msg" ] && continue
+            if [[ "$msg" =~ ^feat: ]]; then
+              features="$features\n- ${msg#feat: }"
+            elif [[ "$msg" =~ ^fix: ]]; then
+              fixes="$fixes\n- ${msg#fix: }"
+            elif [[ ! "$msg" =~ ^chore: ]]; then
+              other="$other\n- $msg"
+            fi
+          done <<< "$commits"
+
+          notes=""
+          [ -n "$features" ] && notes="$notes## Features\n$features\n\n"
+          [ -n "$fixes" ] && notes="$notes## Fixes\n$fixes\n\n"
+          [ -n "$other" ] && notes="$notes## Other\n$other\n\n"
+
+          # Check for migrations
+          if [ -n "$last_tag" ]; then
+            schema_changes=$(git diff --name-only "$last_tag" HEAD -- schema/ | wc -l)
+            if [ "$schema_changes" -gt 0 ]; then
+              notes="$notes> **Note:** This release includes database migrations.\n\n"
+            fi
+          fi
+
+          # Write to file for multiline output
+          echo -e "$notes" > release_notes.md
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "v${{ steps.new.outputs.version }}" \
+            --title "v${{ steps.new.outputs.version }}" \
+            --notes-file release_notes.md

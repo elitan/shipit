@@ -7,6 +7,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m'
 
 FROST_DIR="/opt/frost"
+UPDATE_MARKER="$FROST_DIR/data/.update-requested"
 
 echo -e "${GREEN}Frost Update Script${NC}"
 echo ""
@@ -24,10 +25,16 @@ if [ ! -d "$FROST_DIR" ]; then
   exit 1
 fi
 
+# Remove update marker if present (triggered from UI)
+if [ -f "$UPDATE_MARKER" ]; then
+  rm "$UPDATE_MARKER"
+  echo -e "${YELLOW}Update triggered from UI${NC}"
+fi
+
 cd "$FROST_DIR"
 
 echo -e "${YELLOW}Stopping Frost...${NC}"
-systemctl stop frost
+systemctl stop frost 2>/dev/null || true
 
 echo -e "${YELLOW}Pulling latest changes...${NC}"
 git pull origin main

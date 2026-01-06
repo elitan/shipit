@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import Database from "better-sqlite3";
 import { Kysely, SqliteDialect } from "kysely";
+import pkg from "../../package.json";
 import type { DB } from "./db-types";
 
 const DB_PATH = join(process.cwd(), "data", "frost.db");
@@ -90,6 +91,12 @@ function runMigrations() {
       console.log("Applied 005-settings migration");
     }
   }
+
+  sqlite
+    .prepare(
+      "INSERT INTO settings (key, value) VALUES ('frost_version', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+    )
+    .run(pkg.version);
 }
 
 runMigrations();

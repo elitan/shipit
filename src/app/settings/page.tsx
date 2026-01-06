@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { UpdateCard } from "./_components/update-card";
 
 interface DnsStatus {
   valid: boolean;
@@ -172,7 +173,9 @@ export default function SettingsPage() {
               {sslStatus === "pending" && currentDomain && !pollingTimedOut && (
                 <div className="flex items-center gap-2 rounded-md bg-blue-900/20 p-3 text-blue-400">
                   <Loader2 className="h-5 w-5 animate-spin" />
-                  <span>Configuring SSL... This may take up to 60 seconds.</span>
+                  <span>
+                    Configuring SSL... This may take up to 60 seconds.
+                  </span>
                 </div>
               )}
 
@@ -304,6 +307,8 @@ export default function SettingsPage() {
               </Button>
             </CardContent>
           </Card>
+
+          <UpdateCard />
         </div>
       </main>
     </>

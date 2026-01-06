@@ -20,6 +20,7 @@ Services communicate via Docker network using service name as hostname.
 - IP: 65.21.180.49
 - Domain: frost.j4labs.se
 - SSH: `ssh root@65.21.180.49`
+- Install password: `hejsan`
 
 ## Stack
 - Bun + Next.js 16
@@ -79,3 +80,14 @@ Types in `src/lib/db-types.ts` are auto-generated. Never modify manually.
 - Page-specific components in `_components/` folder next to page.tsx
 - Shared components in `src/components/`
 - When unsure about design decisions, do web searches to see how Vercel/Cloud Run handle it
+
+## Git Conventions
+
+**Commit messages** - use conventional commits format:
+- `feat: add dark mode` - new feature
+- `fix: resolve login redirect` - bug fix
+- `docs: update readme` - documentation
+- `refactor: simplify deploy logic` - code restructure
+- `chore: update deps` - maintenance
+
+Keep messages short (<50 chars title). Body optional for context.
