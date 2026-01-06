@@ -98,16 +98,14 @@ jobs:
             local hash="$1"
             local msg="$2"
 
-            # Strip type/scope prefix
-            local text=$(echo "$msg" | sed -E 's/^[a-z]+(\([^)]+\))?!?: //')
-            # Capitalize first letter
-            text="$(echo "${text:0:1}" | tr '[:lower:]' '[:upper:]')${text:1}"
+            # Strip type/scope prefix and capitalize first letter
+            local text=$(echo "$msg" | sed -E 's/^[a-z]+(\([^)]+\))?!?: //' | sed 's/./\U&/')
 
             # Convert PR references (#123) to links
             text=$(echo "$text" | sed -E "s/#([0-9]+)/[#\1](https:\/\/github.com\/$repo\/pull\/\1)/g")
 
             # Add commit link
-            echo "$text ([\`$hash\`](https://github.com/$repo/commit/$hash))"
+            printf '%s ([`%s`](https://github.com/%s/commit/%s))' "$text" "$hash" "$repo" "$hash"
           }
 
           while IFS='|' read -r hash msg; do
