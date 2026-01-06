@@ -92,6 +92,20 @@ function runMigrations() {
     }
   }
 
+  const serviceColumns = sqlite
+    .prepare("PRAGMA table_info(services)")
+    .all() as Array<{ name: string }>;
+  const serviceColumnNames = serviceColumns.map((c) => c.name);
+
+  if (serviceColumnNames.includes("port")) {
+    const schema006 = join(process.cwd(), "schema", "006-remove-port.sql");
+    if (existsSync(schema006)) {
+      const schema = readFileSync(schema006, "utf-8");
+      sqlite.exec(schema);
+      console.log("Applied 006-remove-port migration");
+    }
+  }
+
   sqlite
     .prepare(
       "INSERT INTO settings (key, value) VALUES ('frost_version', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",

@@ -34,7 +34,6 @@ export default function NewServicePage() {
     const data: CreateServiceInput = {
       name: formData.get("name") as string,
       deploy_type: deployType,
-      port: parseInt(formData.get("port") as string, 10) || 3000,
       env_vars: validEnvVars,
     };
 
@@ -201,27 +200,6 @@ export default function NewServicePage() {
                     </div>
                   </div>
                 )}
-
-                <Separator className="bg-neutral-800" />
-
-                <div className="space-y-4">
-                  <p className="text-xs font-medium uppercase tracking-wider text-neutral-500">
-                    Container Settings
-                  </p>
-                  <div className="grid gap-3">
-                    <Label htmlFor="port" className="text-neutral-300">
-                      Container Port
-                    </Label>
-                    <Input
-                      id="port"
-                      name="port"
-                      type="number"
-                      placeholder="3000"
-                      defaultValue="3000"
-                      className="w-32 border-neutral-700 bg-neutral-800 font-mono text-sm text-neutral-100 placeholder:text-neutral-500"
-                    />
-                  </div>
-                </div>
 
                 <Separator className="bg-neutral-800" />
 

@@ -26,7 +26,6 @@ export interface Service {
   branch: string | null;
   dockerfile_path: string | null;
   image_url: string | null;
-  port: number;
   env_vars: string;
   created_at: number;
   latestDeployment?: Deployment;
@@ -68,14 +67,12 @@ export interface CreateServiceInput {
   branch?: string;
   dockerfile_path?: string;
   image_url?: string;
-  port: number;
   env_vars?: EnvVar[];
 }
 
 export interface UpdateServiceInput {
   name?: string;
   env_vars?: EnvVar[];
-  port?: number;
   branch?: string;
   dockerfile_path?: string;
   repo_url?: string;

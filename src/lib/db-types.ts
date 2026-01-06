@@ -51,7 +51,6 @@ export interface Service {
   branch: Generated<string | null>;
   dockerfile_path: Generated<string | null>;
   image_url: string | null;
-  port: Generated<number>;
   env_vars: Generated<string>;
   created_at: number;
 }

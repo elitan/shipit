@@ -2,12 +2,15 @@ import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 import { join } from "node:path";
 
 let spawnMock: ReturnType<typeof mock>;
+let execMock: ReturnType<typeof mock>;
 let capturedArgs: string[] = [];
 let capturedOptions: { cwd?: string } = {};
+let capturedExecCmd: string = "";
 
 beforeEach(() => {
   capturedArgs = [];
   capturedOptions = {};
+  capturedExecCmd = "";
 
   spawnMock = mock((cmd: string, args: string[], options: { cwd?: string }) => {
     capturedArgs = args;
@@ -23,9 +26,14 @@ beforeEach(() => {
     };
   });
 
+  execMock = mock((cmd: string, callback: Function) => {
+    capturedExecCmd = cmd;
+    callback(null, { stdout: "container-id-123" });
+  });
+
   mock.module("node:child_process", () => ({
     spawn: spawnMock,
-    exec: mock(),
+    exec: execMock,
   }));
 });
 
@@ -79,5 +87,61 @@ describe("buildImage", () => {
     expect(capturedArgs[fIndex + 1]).toBe("Dockerfile.prod");
 
     expect(capturedOptions.cwd).toBe(join(repoPath, "docker"));
+  });
+});
+
+describe("runContainer", () => {
+  test("injects PORT=8080 env var", async () => {
+    const { runContainer } = await import("./docker");
+
+    await runContainer({
+      imageName: "test-image:latest",
+      hostPort: 10001,
+      name: "test-container",
+    });
+
+    expect(capturedExecCmd).toContain("-e PORT=");
+    expect(capturedExecCmd).toContain('"8080"');
+  });
+
+  test("uses port 8080 for container port mapping", async () => {
+    const { runContainer } = await import("./docker");
+
+    await runContainer({
+      imageName: "test-image:latest",
+      hostPort: 10001,
+      name: "test-container",
+    });
+
+    expect(capturedExecCmd).toContain("-p 10001:8080");
+  });
+
+  test("allows user to override PORT env var", async () => {
+    const { runContainer } = await import("./docker");
+
+    await runContainer({
+      imageName: "test-image:latest",
+      hostPort: 10001,
+      name: "test-container",
+      envVars: { PORT: "3000", MY_VAR: "value" },
+    });
+
+    expect(capturedExecCmd).toContain('"3000"');
+    expect(capturedExecCmd).toContain("MY_VAR=");
+  });
+
+  test("includes network and hostname flags", async () => {
+    const { runContainer } = await import("./docker");
+
+    await runContainer({
+      imageName: "test-image:latest",
+      hostPort: 10001,
+      name: "test-container",
+      network: "frost-net-123",
+      hostname: "my-service",
+    });
+
+    expect(capturedExecCmd).toContain("--network frost-net-123");
+    expect(capturedExecCmd).toContain("--hostname my-service");
   });
 });
