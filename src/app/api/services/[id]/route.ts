@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { stopContainer } from "@/lib/docker";
+import { syncCaddyConfig } from "@/lib/domains";
 
 export async function GET(
   request: Request,
@@ -106,6 +107,10 @@ export async function DELETE(
   }
 
   await db.deleteFrom("services").where("id", "=", id).execute();
+
+  try {
+    await syncCaddyConfig();
+  } catch {}
 
   return NextResponse.json({ success: true });
 }

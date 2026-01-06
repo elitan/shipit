@@ -15,6 +15,7 @@ import {
   stopContainer,
   waitForHealthy,
 } from "./docker";
+import { syncCaddyConfig } from "./domains";
 import type { EnvVar } from "./types";
 
 const execAsync = promisify(exec);
@@ -275,6 +276,16 @@ async function runServiceDeployment(
       deploymentId,
       `\nDeployment successful! App available at http://localhost:${hostPort}\n`,
     );
+
+    try {
+      await syncCaddyConfig();
+      await appendLog(deploymentId, "Caddy config synced\n");
+    } catch (err: any) {
+      await appendLog(
+        deploymentId,
+        `Warning: Failed to sync Caddy config: ${err.message}\n`,
+      );
+    }
 
     const previousDeployments = await db
       .selectFrom("deployments")

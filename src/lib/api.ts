@@ -50,6 +50,38 @@ export interface EnvVar {
   value: string;
 }
 
+export interface Domain {
+  id: string;
+  service_id: string;
+  domain: string;
+  type: "proxy" | "redirect";
+  redirect_target: string | null;
+  redirect_code: number | null;
+  dns_verified: number;
+  ssl_status: "pending" | "active" | "failed";
+  created_at: number;
+}
+
+export interface AddDomainInput {
+  domain: string;
+  type?: "proxy" | "redirect";
+  redirectTarget?: string;
+  redirectCode?: 301 | 307;
+}
+
+export interface UpdateDomainInput {
+  type?: "proxy" | "redirect";
+  redirectTarget?: string;
+  redirectCode?: 301 | 307;
+}
+
+export interface DnsStatus {
+  valid: boolean;
+  serverIp: string;
+  domainIp: string | null;
+  dnsVerified: boolean;
+}
+
 export interface CreateProjectInput {
   name: string;
   env_vars?: EnvVar[];
@@ -163,6 +195,40 @@ export const api = {
     listByService: (serviceId: string): Promise<Deployment[]> =>
       fetch(`/api/services/${serviceId}/deployments`).then((r) =>
         handleResponse<Deployment[]>(r),
+      ),
+  },
+
+  domains: {
+    list: (serviceId: string): Promise<Domain[]> =>
+      fetch(`/api/services/${serviceId}/domains`).then((r) =>
+        handleResponse<Domain[]>(r),
+      ),
+
+    get: (id: string): Promise<Domain> =>
+      fetch(`/api/domains/${id}`).then((r) => handleResponse<Domain>(r)),
+
+    add: (serviceId: string, data: AddDomainInput): Promise<Domain> =>
+      fetch(`/api/services/${serviceId}/domains`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }).then((r) => handleResponse<Domain>(r)),
+
+    update: (id: string, data: UpdateDomainInput): Promise<Domain> =>
+      fetch(`/api/domains/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }).then((r) => handleResponse<Domain>(r)),
+
+    delete: (id: string): Promise<{ success: boolean }> =>
+      fetch(`/api/domains/${id}`, { method: "DELETE" }).then((r) =>
+        handleResponse<{ success: boolean }>(r),
+      ),
+
+    verifyDns: (id: string): Promise<DnsStatus> =>
+      fetch(`/api/domains/${id}/verify-dns`, { method: "POST" }).then((r) =>
+        handleResponse<DnsStatus>(r),
       ),
   },
 };
