@@ -125,35 +125,27 @@ export function UpdateCard() {
 
         {status?.availableVersion && (
           <div className="rounded-lg border border-blue-800 bg-blue-900/20 p-4">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="font-medium text-blue-400">
-                  Update Available: v{status.availableVersion}
+            <div>
+              <p className="font-medium text-blue-400">
+                Update Available: v{status.availableVersion}
+              </p>
+              {status.publishedAt && (
+                <p className="mt-1 text-xs text-neutral-400">
+                  Released {formatPublishedAt(status.publishedAt)}
                 </p>
-                {status.publishedAt && (
-                  <p className="mt-1 text-xs text-neutral-400">
-                    Released {formatPublishedAt(status.publishedAt)}
-                  </p>
-                )}
-              </div>
-              {status.htmlUrl && (
-                <a
-                  href={status.htmlUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-neutral-400 hover:text-neutral-200"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                </a>
               )}
             </div>
 
-            {status.releaseNotes?.trim() && (
-              <div className="mt-3 max-h-48 overflow-y-auto rounded border border-neutral-700 bg-neutral-800/50 p-3">
-                <pre className="whitespace-pre-wrap text-xs text-neutral-300">
-                  {status.releaseNotes.trim()}
-                </pre>
-              </div>
+            {status.htmlUrl && (
+              <a
+                href={status.htmlUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 flex items-center gap-1.5 text-sm text-neutral-400 hover:text-neutral-200"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                View release notes
+              </a>
             )}
 
             {status.hasMigrations && (
