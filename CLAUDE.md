@@ -10,7 +10,13 @@ Simple deployment platform. Docker-only, single-user.
 - `repo`: builds from git repo (repo_url, branch, dockerfile_path)
 - `image`: pulls pre-built image (image_url)
 
+**IMPORTANT**: Apps must listen on `PORT` env var (default 8080). Pre-built images like nginx/whoami that ignore PORT won't work. Use images that respect PORT (e.g., `gcr.io/google-samples/hello-app:1.0`).
+
 Services communicate via Docker network using service name as hostname.
+
+**Domain** - custom domain attached to a service. Multiple domains per service supported. Types:
+- `proxy`: routes traffic to service
+- `redirect`: 301/307 redirect to another domain
 
 **Deployment** - immutable record of a service deployment. Status: pending → cloning/pulling → building → deploying → running/failed. Tracks container_id, host_port, build_log.
 
@@ -19,6 +25,7 @@ Services communicate via Docker network using service name as hostname.
 ## Test VPS
 - IP: 65.21.180.49
 - Domain: frost.j4labs.se
+- Test service domain: testapp.frost.j4labs.se (A record points to VPS)
 - SSH: `ssh root@65.21.180.49`
 - Install password: `hejsan123`
 - **Always enable "Use staging certificates" when setting up SSL** to avoid Let's Encrypt rate limits
@@ -60,7 +67,7 @@ curl localhost:3000/api/deployments/{id}
 ## Database
 SQLite at `data/frost.db`. Auto-migrates on startup.
 
-Tables: `projects`, `services`, `deployments`, `settings`
+Tables: `projects`, `services`, `deployments`, `domains`, `settings`
 
 Types in `src/lib/db-types.ts` are auto-generated. Never modify manually.
 
