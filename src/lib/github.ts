@@ -312,7 +312,7 @@ export function buildManifest(domain: string): object {
     redirect_url: `${baseUrl}/api/github/callback`,
     callback_urls: [`${baseUrl}/api/github/callback`],
     setup_url: `${baseUrl}/api/github/install-callback`,
-    public: false,
+    public: true,
     default_permissions: {
       contents: "read",
       metadata: "read",
