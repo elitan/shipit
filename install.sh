@@ -147,7 +147,7 @@ After=network.target docker.service caddy.service
 [Service]
 Type=simple
 WorkingDirectory=$FROST_DIR
-ExecStartPre=/bin/bash -c 'test -f $FROST_DIR/data/.update-requested && $FROST_DIR/update.sh || true'
+ExecStartPre=/bin/bash -c 'test -f $FROST_DIR/data/.update-requested && bash $FROST_DIR/update.sh || true'
 ExecStart=/usr/bin/npm run start
 Restart=on-failure
 EnvironmentFile=$FROST_DIR/.env
