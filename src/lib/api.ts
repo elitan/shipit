@@ -1,3 +1,10 @@
+export interface ProjectLatestDeployment {
+  status: string;
+  commit_message: string | null;
+  created_at: number;
+  branch: string | null;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -5,6 +12,9 @@ export interface Project {
   created_at: number;
   services?: Service[];
   servicesCount?: number;
+  latestDeployment?: ProjectLatestDeployment | null;
+  repoUrl?: string | null;
+  runningUrl?: string | null;
 }
 
 export interface Service {
@@ -27,6 +37,7 @@ export interface Deployment {
   project_id: string;
   service_id: string;
   commit_sha: string;
+  commit_message: string | null;
   status: string;
   host_port: number | null;
   created_at: number;
