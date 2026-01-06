@@ -67,9 +67,9 @@ export async function POST(request: Request) {
 
     await setSetting("domain", domain);
     await setSetting("email", email);
-    await setSetting("ssl_enabled", "true");
+    await setSetting("ssl_enabled", "pending");
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, status: "pending" });
   } catch (error) {
     return NextResponse.json(
       {

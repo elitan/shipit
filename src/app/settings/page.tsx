@@ -25,7 +25,10 @@ export default function SettingsPage() {
   const [success, setSuccess] = useState(false);
 
   const [currentDomain, setCurrentDomain] = useState<string | null>(null);
-  const [sslEnabled, setSslEnabled] = useState(false);
+  const [sslStatus, setSslStatus] = useState<"true" | "pending" | "false">(
+    "false",
+  );
+  const [pollingTimedOut, setPollingTimedOut] = useState(false);
 
   useEffect(() => {
     fetch("/api/settings")
@@ -38,12 +41,45 @@ export default function SettingsPage() {
         if (data.email) {
           setEmail(data.email);
         }
-        if (data.ssl_enabled === "true") {
-          setSslEnabled(true);
+        if (data.ssl_enabled === "true" || data.ssl_enabled === "pending") {
+          setSslStatus(data.ssl_enabled);
         }
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (sslStatus !== "pending" || !currentDomain) return;
+
+    const startTime = Date.now();
+    const maxDuration = 60000;
+
+    const interval = setInterval(async () => {
+      if (Date.now() - startTime > maxDuration) {
+        clearInterval(interval);
+        setPollingTimedOut(true);
+        setEnabling(false);
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/settings/verify-ssl", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ domain: currentDomain }),
+        });
+        const data = await res.json();
+        if (data.working) {
+          clearInterval(interval);
+          setSslStatus("true");
+          setSuccess(true);
+          setEnabling(false);
+        }
+      } catch {}
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [sslStatus, currentDomain]);
 
   async function handleVerifyDns() {
     if (!domain) return;
@@ -79,6 +115,7 @@ export default function SettingsPage() {
 
     setEnabling(true);
     setError("");
+    setPollingTimedOut(false);
 
     try {
       const res = await fetch("/api/settings/enable-ssl", {
@@ -91,15 +128,14 @@ export default function SettingsPage() {
 
       if (!res.ok) {
         setError(data.error || "Failed to enable SSL");
+        setEnabling(false);
         return;
       }
 
-      setSuccess(true);
-      setSslEnabled(true);
       setCurrentDomain(domain);
+      setSslStatus("pending");
     } catch {
       setError("Failed to enable SSL");
-    } finally {
       setEnabling(false);
     }
   }
@@ -116,7 +152,7 @@ export default function SettingsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              {sslEnabled && currentDomain && (
+              {sslStatus === "true" && currentDomain && (
                 <div className="flex items-center gap-2 rounded-md bg-green-900/20 p-3 text-green-400">
                   <CheckCircle2 className="h-5 w-5" />
                   <span>
@@ -129,6 +165,22 @@ export default function SettingsPage() {
                     >
                       {currentDomain}
                     </a>
+                  </span>
+                </div>
+              )}
+
+              {sslStatus === "pending" && currentDomain && !pollingTimedOut && (
+                <div className="flex items-center gap-2 rounded-md bg-blue-900/20 p-3 text-blue-400">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span>Configuring SSL... This may take up to 60 seconds.</span>
+                </div>
+              )}
+
+              {sslStatus === "pending" && pollingTimedOut && (
+                <div className="flex items-center gap-2 rounded-md bg-yellow-900/20 p-3 text-yellow-400">
+                  <span>
+                    SSL is still being configured. Please wait a few minutes and
+                    refresh the page.
                   </span>
                 </div>
               )}
@@ -232,13 +284,19 @@ export default function SettingsPage() {
 
               <Button
                 onClick={handleEnableSsl}
-                disabled={!domain || !email || !dnsStatus?.valid || enabling}
+                disabled={
+                  !domain ||
+                  !email ||
+                  !dnsStatus?.valid ||
+                  enabling ||
+                  sslStatus === "pending"
+                }
                 className="w-full"
               >
-                {enabling ? (
+                {enabling || sslStatus === "pending" ? (
                   <>
                     <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
-                    Enabling SSL...
+                    Configuring SSL...
                   </>
                 ) : (
                   "Enable SSL"
