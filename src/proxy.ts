@@ -2,8 +2,6 @@ import { createHash, createHmac } from "node:crypto";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-export const runtime = "nodejs";
-
 const DEFAULT_SECRET = "frost-default-secret-change-me";
 const JWT_SECRET = process.env.FROST_JWT_SECRET || DEFAULT_SECRET;
 
