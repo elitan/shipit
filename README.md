@@ -11,7 +11,7 @@ Simple deployment platform. Docker-only, single-user.
 
 ## Stack
 
-- Next.js 15.1 + Bun
+- Next.js + Bun
 - SQLite + Kysely
 - Tailwind + shadcn/ui
 - Docker
