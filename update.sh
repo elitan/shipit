@@ -44,7 +44,9 @@ if [ "$PRE_START" = false ]; then
 fi
 
 echo -e "${YELLOW}Pulling latest changes...${NC}"
-git pull origin main
+git fetch origin main
+git checkout main
+git reset --hard origin/main
 
 echo -e "${YELLOW}Installing dependencies...${NC}"
 npm install --legacy-peer-deps --silent
