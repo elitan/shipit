@@ -78,3 +78,4 @@ Types in `src/lib/db-types.ts` are auto-generated. Never modify manually.
 - Host ports: 10000-20000 range
 - Page-specific components in `_components/` folder next to page.tsx
 - Shared components in `src/components/`
+- When unsure about design decisions, do web searches to see how Vercel/Cloud Run handle it
