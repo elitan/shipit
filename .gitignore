@@ -47,3 +47,4 @@ yarn-error.log*
 
 # bun
 bun.lockb
+next-env.d.ts
