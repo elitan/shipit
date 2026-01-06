@@ -102,6 +102,7 @@ if ! command -v bun &> /dev/null; then
   curl -fsSL https://bun.sh/install 2>/dev/null | bash > /dev/null 2>&1
   export BUN_INSTALL="$HOME/.bun"
   export PATH="$BUN_INSTALL/bin:$PATH"
+  ln -sf "$HOME/.bun/bin/bun" /usr/local/bin/bun
 else
   echo "Bun already installed"
 fi
@@ -120,6 +121,7 @@ fi
 
 echo "Cloning Frost..."
 git clone "$FROST_REPO" "$FROST_DIR"
+git config --global --add safe.directory "$FROST_DIR"
 cd "$FROST_DIR"
 
 if [ -n "$FROST_VERSION" ]; then

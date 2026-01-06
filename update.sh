@@ -77,6 +77,11 @@ cd "$FROST_DIR"
 
 git config --global --add safe.directory "$FROST_DIR" 2>/dev/null || true
 
+# Ensure bun is in PATH
+if [ -f "$HOME/.bun/bin/bun" ] && [ ! -f /usr/local/bin/bun ]; then
+  ln -sf "$HOME/.bun/bin/bun" /usr/local/bin/bun
+fi
+
 CURRENT_VERSION=$(cat package.json | grep '"version"' | head -1 | sed 's/.*"version": "\([^"]*\)".*/\1/')
 log "Current version: $CURRENT_VERSION"
 
