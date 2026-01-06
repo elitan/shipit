@@ -58,7 +58,9 @@ export async function configureDomain(
                     handler: "static_response",
                     status_code: 301,
                     headers: {
-                      Location: ["https://{http.request.host}{http.request.uri}"],
+                      Location: [
+                        "https://{http.request.host}{http.request.uri}",
+                      ],
                     },
                   },
                 ],
@@ -133,7 +135,9 @@ export async function lockToDomain(
                     handler: "static_response",
                     status_code: 301,
                     headers: {
-                      Location: ["https://{http.request.host}{http.request.uri}"],
+                      Location: [
+                        "https://{http.request.host}{http.request.uri}",
+                      ],
                     },
                   },
                 ],

@@ -147,7 +147,9 @@ export function DomainsSection({
                   size="sm"
                   onClick={() => setDomainType("proxy")}
                   className={
-                    domainType === "proxy" ? "" : "border-neutral-700 text-neutral-400"
+                    domainType === "proxy"
+                      ? ""
+                      : "border-neutral-700 text-neutral-400"
                   }
                 >
                   Proxy
@@ -247,7 +249,12 @@ interface DomainRowProps {
   isVerifying: boolean;
 }
 
-function DomainRow({ domain, onVerify, onDelete, isVerifying }: DomainRowProps) {
+function DomainRow({
+  domain,
+  onVerify,
+  onDelete,
+  isVerifying,
+}: DomainRowProps) {
   const isVerified = domain.dns_verified === 1;
   const isActive = domain.ssl_status === "active";
 
@@ -261,7 +268,9 @@ function DomainRow({ domain, onVerify, onDelete, isVerifying }: DomainRowProps) 
               <span className="flex items-center gap-1 text-sm text-neutral-300">
                 {domain.domain}
                 <ArrowRight className="h-3 w-3 text-neutral-500" />
-                <span className="text-neutral-400">{domain.redirect_target}</span>
+                <span className="text-neutral-400">
+                  {domain.redirect_target}
+                </span>
               </span>
             ) : isVerified ? (
               <a
@@ -279,23 +288,35 @@ function DomainRow({ domain, onVerify, onDelete, isVerifying }: DomainRowProps) 
           </div>
           <div className="mt-1 flex items-center gap-2">
             {isVerified ? (
-              <Badge variant="outline" className="border-green-800 text-green-400">
+              <Badge
+                variant="outline"
+                className="border-green-800 text-green-400"
+              >
                 <CheckCircle2 className="mr-1 h-3 w-3" />
                 DNS verified
               </Badge>
             ) : (
-              <Badge variant="outline" className="border-yellow-800 text-yellow-400">
+              <Badge
+                variant="outline"
+                className="border-yellow-800 text-yellow-400"
+              >
                 <XCircle className="mr-1 h-3 w-3" />
                 DNS pending
               </Badge>
             )}
             {domain.type === "redirect" && (
-              <Badge variant="outline" className="border-neutral-700 text-neutral-400">
+              <Badge
+                variant="outline"
+                className="border-neutral-700 text-neutral-400"
+              >
                 301 redirect
               </Badge>
             )}
             {isActive && (
-              <Badge variant="outline" className="border-green-800 text-green-400">
+              <Badge
+                variant="outline"
+                className="border-green-800 text-green-400"
+              >
                 SSL active
               </Badge>
             )}

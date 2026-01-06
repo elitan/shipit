@@ -1,9 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  api,
-  type AddDomainInput,
-  type UpdateDomainInput,
-} from "@/lib/api";
+import { type AddDomainInput, api, type UpdateDomainInput } from "@/lib/api";
 
 export function useDomains(serviceId: string) {
   return useQuery({

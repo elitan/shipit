@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  AlertTriangle,
-  CheckCircle2,
-  ExternalLink,
-  Loader2,
-  RefreshCw,
-} from "lucide-react";
+import { AlertTriangle, CheckCircle2, Loader2, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SettingCard } from "./setting-card";

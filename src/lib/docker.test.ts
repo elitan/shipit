@@ -26,10 +26,15 @@ beforeEach(() => {
     };
   });
 
-  execMock = mock((cmd: string, callback: Function) => {
-    capturedExecCmd = cmd;
-    callback(null, { stdout: "container-id-123" });
-  });
+  execMock = mock(
+    (
+      cmd: string,
+      callback: (err: Error | null, result: { stdout: string }) => void,
+    ) => {
+      capturedExecCmd = cmd;
+      callback(null, { stdout: "container-id-123" });
+    },
+  );
 
   mock.module("node:child_process", () => ({
     spawn: spawnMock,

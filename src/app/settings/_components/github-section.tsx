@@ -52,7 +52,11 @@ export function GitHubSection() {
   }, []);
 
   async function handleDisconnect() {
-    if (!confirm("Disconnect GitHub? You'll need to set up a new GitHub App to reconnect.")) {
+    if (
+      !confirm(
+        "Disconnect GitHub? You'll need to set up a new GitHub App to reconnect.",
+      )
+    ) {
       return;
     }
 
@@ -66,7 +70,15 @@ export function GitHubSection() {
         throw new Error(data.error || "Failed to disconnect");
       }
       setStatus((prev) =>
-        prev ? { ...prev, connected: false, installed: false, appName: null, appSlug: null } : null,
+        prev
+          ? {
+              ...prev,
+              connected: false,
+              installed: false,
+              appName: null,
+              appSlug: null,
+            }
+          : null,
       );
     } catch (err: any) {
       setError(err.message);
@@ -149,8 +161,8 @@ export function GitHubSection() {
           <div className="rounded-md bg-yellow-900/20 p-4 text-yellow-400">
             <p className="font-medium">Domain required</p>
             <p className="mt-1 text-sm text-yellow-500">
-              Configure a domain with SSL before connecting GitHub.
-              Webhooks require a publicly accessible URL.
+              Configure a domain with SSL before connecting GitHub. Webhooks
+              require a publicly accessible URL.
             </p>
             <Link
               href="/settings/domain"
@@ -164,8 +176,8 @@ export function GitHubSection() {
         {status?.hasDomain && !status?.connected && (
           <>
             <p className="text-sm text-neutral-400">
-              Click "Connect GitHub" to create a GitHub App for your Frost instance.
-              You'll be redirected to GitHub to complete the setup.
+              Click "Connect GitHub" to create a GitHub App for your Frost
+              instance. You'll be redirected to GitHub to complete the setup.
             </p>
             <form
               ref={formRef}
@@ -182,8 +194,8 @@ export function GitHubSection() {
           <div className="rounded-md bg-blue-900/20 p-4 text-blue-400">
             <p className="font-medium">Installation required</p>
             <p className="mt-1 text-sm text-blue-300">
-              Your GitHub App "{status.appName}" was created.
-              Install it on your repositories to enable deployments.
+              Your GitHub App "{status.appName}" was created. Install it on your
+              repositories to enable deployments.
             </p>
             <a
               href={`https://github.com/apps/${status.appSlug}/installations/new`}
@@ -200,8 +212,8 @@ export function GitHubSection() {
             <div>
               <p className="font-medium">Connected</p>
               <p className="mt-1 text-sm text-green-300">
-                GitHub App "{status.appName}" is installed and ready.
-                You can now deploy from private repositories.
+                GitHub App "{status.appName}" is installed and ready. You can
+                now deploy from private repositories.
               </p>
               <a
                 href={`https://github.com/apps/${status.appSlug}/installations/new`}

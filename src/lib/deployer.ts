@@ -200,7 +200,10 @@ async function runServiceDeployment(
         try {
           const token = await generateInstallationToken();
           cloneUrl = injectTokenIntoUrl(service.repo_url, token);
-          await appendLog(deploymentId, "Using GitHub App for authentication\n");
+          await appendLog(
+            deploymentId,
+            "Using GitHub App for authentication\n",
+          );
         } catch (err: any) {
           await appendLog(
             deploymentId,

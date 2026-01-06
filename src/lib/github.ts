@@ -26,7 +26,14 @@ export async function getGitHubAppCredentials(): Promise<GitHubAppCredentials | 
   const clientSecret = await getSetting("github_app_client_secret");
   const installationId = await getSetting("github_app_installation_id");
 
-  if (!slug || !name || !privateKey || !webhookSecret || !clientId || !clientSecret) {
+  if (
+    !slug ||
+    !name ||
+    !privateKey ||
+    !webhookSecret ||
+    !clientId ||
+    !clientSecret
+  ) {
     return null;
   }
 
@@ -65,7 +72,9 @@ export async function saveGitHubAppCredentials(creds: {
   await setSetting("github_app_client_secret", creds.clientSecret);
 }
 
-export async function saveInstallationId(installationId: string): Promise<void> {
+export async function saveInstallationId(
+  installationId: string,
+): Promise<void> {
   await setSetting("github_app_installation_id", installationId);
 }
 

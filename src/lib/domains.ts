@@ -20,10 +20,7 @@ export interface DnsStatus {
   domainIp: string | null;
 }
 
-export async function addDomain(
-  serviceId: string,
-  input: DomainInput,
-) {
+export async function addDomain(serviceId: string, input: DomainInput) {
   const { domain, type = "proxy", redirectTarget, redirectCode = 301 } = input;
 
   const id = nanoid();
@@ -95,11 +92,7 @@ export async function updateDomain(
 
   if (Object.keys(setValues).length === 0) return getDomain(id);
 
-  await db
-    .updateTable("domains")
-    .set(setValues)
-    .where("id", "=", id)
-    .execute();
+  await db.updateTable("domains").set(setValues).where("id", "=", id).execute();
 
   return getDomain(id);
 }
@@ -159,7 +152,11 @@ interface DomainRoute {
   redirectCode?: number;
 }
 
-function buildCaddyConfig(routes: DomainRoute[], email: string, staging: boolean) {
+function buildCaddyConfig(
+  routes: DomainRoute[],
+  email: string,
+  staging: boolean,
+) {
   const httpsRoutes: unknown[] = [];
   const allDomains: string[] = [];
 
@@ -214,7 +211,9 @@ function buildCaddyConfig(routes: DomainRoute[], email: string, staging: boolean
                     handler: "static_response",
                     status_code: 301,
                     headers: {
-                      Location: ["https://{http.request.host}{http.request.uri}"],
+                      Location: [
+                        "https://{http.request.host}{http.request.uri}",
+                      ],
                     },
                   },
                 ],
