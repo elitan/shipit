@@ -19,12 +19,14 @@ function getGitHubOwnerFromUrl(url: string | null): string | null {
 interface ServiceCardProps {
   service: Service;
   projectId: string;
+  serverIp: string | null;
   onDelete: () => void;
 }
 
 export function ServiceCard({
   service,
   projectId,
+  serverIp,
   onDelete,
 }: ServiceCardProps) {
   const deployMutation = useDeployService(service.id, projectId);
@@ -118,7 +120,7 @@ export function ServiceCard({
                   e.preventDefault();
                   e.stopPropagation();
                   window.open(
-                    `http://localhost:${deployment.host_port}`,
+                    `http://${serverIp || "localhost"}:${deployment.host_port}`,
                     "_blank",
                     "noopener,noreferrer",
                   );

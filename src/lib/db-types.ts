@@ -79,6 +79,7 @@ export interface Service {
   image_url: string | null;
   env_vars: Generated<string>;
   created_at: number;
+  container_port: Generated<number | null>;
 }
 
 export interface Setting {

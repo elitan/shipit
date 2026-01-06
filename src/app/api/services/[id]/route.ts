@@ -54,6 +54,15 @@ export async function PATCH(
   if (body.env_vars !== undefined) {
     updates.env_vars = JSON.stringify(body.env_vars);
   }
+  if (body.container_port !== undefined) {
+    if (body.container_port < 1 || body.container_port > 65535) {
+      return NextResponse.json(
+        { error: "container_port must be between 1 and 65535" },
+        { status: 400 },
+      );
+    }
+    updates.container_port = body.container_port;
+  }
   if (service.deploy_type === "repo") {
     if (body.branch !== undefined) {
       updates.branch = body.branch;

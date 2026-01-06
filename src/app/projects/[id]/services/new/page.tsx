@@ -39,11 +39,13 @@ export default function NewServicePage() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const validEnvVars = envVars.filter((v) => v.key.trim() !== "");
+    const containerPort = parseInt(formData.get("container_port") as string, 10);
 
     const data: CreateServiceInput = {
       name: formData.get("name") as string,
       deploy_type: deployType,
       env_vars: validEnvVars,
+      container_port: containerPort || 8080,
     };
 
     if (deployType === "repo") {
@@ -283,6 +285,34 @@ export default function NewServicePage() {
                     </div>
                   </div>
                 )}
+
+                <Separator className="bg-neutral-800" />
+
+                <div className="space-y-4">
+                  <p className="text-xs font-medium uppercase tracking-wider text-neutral-500">
+                    Container Settings
+                  </p>
+
+                  <div className="grid gap-3">
+                    <Label htmlFor="container_port" className="text-neutral-300">
+                      Container Port
+                    </Label>
+                    <Input
+                      id="container_port"
+                      name="container_port"
+                      type="number"
+                      placeholder="8080"
+                      defaultValue="8080"
+                      min={1}
+                      max={65535}
+                      className="border-neutral-700 bg-neutral-800 font-mono text-sm text-neutral-100 placeholder:text-neutral-500"
+                    />
+                    <p className="text-xs text-neutral-500">
+                      Port your container listens on. Use this if your image
+                      ignores the PORT env var.
+                    </p>
+                  </div>
+                </div>
 
                 <Separator className="bg-neutral-800" />
 

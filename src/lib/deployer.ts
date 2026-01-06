@@ -267,6 +267,7 @@ async function runServiceDeployment(
     const runResult = await runContainer({
       imageName,
       hostPort,
+      containerPort: service.container_port ?? undefined,
       name: containerName,
       envVars,
       network: networkName,

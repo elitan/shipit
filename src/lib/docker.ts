@@ -101,6 +101,7 @@ const DEFAULT_PORT = 8080;
 export interface RunContainerOptions {
   imageName: string;
   hostPort: number;
+  containerPort?: number;
   name: string;
   envVars?: Record<string, string>;
   network?: string;
@@ -110,18 +111,18 @@ export interface RunContainerOptions {
 export async function runContainer(
   options: RunContainerOptions,
 ): Promise<RunResult> {
-  const { imageName, hostPort, name, envVars, network, hostname } = options;
+  const { imageName, hostPort, containerPort = DEFAULT_PORT, name, envVars, network, hostname } = options;
   try {
     await stopContainer(name);
 
-    const allEnvVars = { PORT: String(DEFAULT_PORT), ...envVars };
+    const allEnvVars = { PORT: String(containerPort), ...envVars };
     const envFlags = Object.entries(allEnvVars)
       .map(([k, v]) => `-e ${k}=${JSON.stringify(v)}`)
       .join(" ");
     const networkFlag = network ? `--network ${network}` : "";
     const hostnameFlag = hostname ? `--hostname ${hostname}` : "";
     const { stdout } = await execAsync(
-      `docker run -d --name ${name} -p ${hostPort}:${DEFAULT_PORT} ${networkFlag} ${hostnameFlag} ${envFlags} ${imageName}`.replace(
+      `docker run -d --name ${name} -p ${hostPort}:${containerPort} ${networkFlag} ${hostnameFlag} ${envFlags} ${imageName}`.replace(
         /\s+/g,
         " ",
       ),

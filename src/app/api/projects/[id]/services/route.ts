@@ -48,6 +48,7 @@ export async function POST(
     dockerfile_path = "Dockerfile",
     image_url,
     env_vars = [],
+    container_port,
   } = body;
 
   if (!name) {
@@ -64,6 +65,13 @@ export async function POST(
   if (deploy_type === "image" && !image_url) {
     return NextResponse.json(
       { error: "image_url is required for image deployments" },
+      { status: 400 },
+    );
+  }
+
+  if (container_port !== undefined && (container_port < 1 || container_port > 65535)) {
+    return NextResponse.json(
+      { error: "container_port must be between 1 and 65535" },
       { status: 400 },
     );
   }
@@ -107,6 +115,7 @@ export async function POST(
       dockerfile_path: deploy_type === "repo" ? dockerfile_path : null,
       image_url: deploy_type === "image" ? image_url : null,
       env_vars: JSON.stringify(env_vars),
+      container_port: container_port ?? null,
       created_at: now,
     })
     .execute();

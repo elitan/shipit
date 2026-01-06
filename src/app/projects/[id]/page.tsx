@@ -3,7 +3,7 @@
 import { Loader2, Pencil, Plus, Rocket, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { BreadcrumbHeader } from "@/components/breadcrumb-header";
 import { EmptyState } from "@/components/empty-state";
@@ -18,7 +18,7 @@ import {
   useUpdateProject,
 } from "@/hooks/use-projects";
 import { useDeleteService } from "@/hooks/use-services";
-import type { EnvVar } from "@/lib/api";
+import { api, type EnvVar } from "@/lib/api";
 import { ServiceCard } from "./_components/service-card";
 
 export default function ProjectPage() {
@@ -34,6 +34,11 @@ export default function ProjectPage() {
 
   const [editingEnv, setEditingEnv] = useState(false);
   const [envVars, setEnvVars] = useState<EnvVar[]>([]);
+  const [serverIp, setServerIp] = useState<string | null>(null);
+
+  useEffect(() => {
+    api.settings.get().then((s) => setServerIp(s.server_ip));
+  }, []);
 
   async function handleDeployAll() {
     try {
@@ -189,6 +194,7 @@ export default function ProjectPage() {
                   key={service.id}
                   service={service}
                   projectId={projectId}
+                  serverIp={serverIp}
                   onDelete={() => handleDeleteService(service.id)}
                 />
               ))}

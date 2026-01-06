@@ -27,6 +27,7 @@ export interface Service {
   dockerfile_path: string | null;
   image_url: string | null;
   env_vars: string;
+  container_port: number | null;
   created_at: number;
   latestDeployment?: Deployment;
 }
@@ -82,6 +83,13 @@ export interface DnsStatus {
   dnsVerified: boolean;
 }
 
+export interface Settings {
+  domain: string | null;
+  email: string | null;
+  ssl_enabled: string | null;
+  server_ip: string | null;
+}
+
 export interface CreateProjectInput {
   name: string;
   env_vars?: EnvVar[];
@@ -100,6 +108,7 @@ export interface CreateServiceInput {
   dockerfile_path?: string;
   image_url?: string;
   env_vars?: EnvVar[];
+  container_port?: number;
 }
 
 export interface UpdateServiceInput {
@@ -109,6 +118,7 @@ export interface UpdateServiceInput {
   dockerfile_path?: string;
   repo_url?: string;
   image_url?: string;
+  container_port?: number;
 }
 
 async function handleResponse<T>(res: Response): Promise<T> {
@@ -230,5 +240,10 @@ export const api = {
       fetch(`/api/domains/${id}/verify-dns`, { method: "POST" }).then((r) =>
         handleResponse<DnsStatus>(r),
       ),
+  },
+
+  settings: {
+    get: (): Promise<Settings> =>
+      fetch("/api/settings").then((r) => handleResponse<Settings>(r)),
   },
 };

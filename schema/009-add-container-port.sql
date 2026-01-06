@@ -1,0 +1,1 @@
+ALTER TABLE services ADD COLUMN container_port INTEGER DEFAULT 8080;

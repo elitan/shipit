@@ -41,6 +41,11 @@ export default function ServicePage() {
   const selectedDeploymentRef = useRef<string | null>(null);
   const [editingEnv, setEditingEnv] = useState(false);
   const [envVars, setEnvVars] = useState<EnvVar[]>([]);
+  const [serverIp, setServerIp] = useState<string | null>(null);
+
+  useEffect(() => {
+    api.settings.get().then((s) => setServerIp(s.server_ip));
+  }, []);
 
   useEffect(() => {
     if (!service) return;
@@ -216,7 +221,7 @@ export default function ServicePage() {
                     </span>
                   </div>
                   <a
-                    href={`http://localhost:${runningDeployment.host_port}`}
+                    href={`http://${serverIp || "localhost"}:${runningDeployment.host_port}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-1.5 text-sm text-blue-400 hover:text-blue-300"
@@ -322,6 +327,12 @@ export default function ServicePage() {
                     </dd>
                   </div>
                 )}
+                <div>
+                  <dt className="text-neutral-500">Container Port</dt>
+                  <dd className="mt-1 font-mono text-neutral-300">
+                    {service.container_port ?? 8080}
+                  </dd>
+                </div>
               </dl>
             </CardContent>
           </Card>

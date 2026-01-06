@@ -101,7 +101,7 @@ export async function removeDomain(id: string) {
   await db.deleteFrom("domains").where("id", "=", id).execute();
 }
 
-async function getServerIp(): Promise<string> {
+export async function getServerIp(): Promise<string> {
   const services = ["https://api.ipify.org", "https://ifconfig.me/ip"];
 
   for (const url of services) {
