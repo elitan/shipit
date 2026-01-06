@@ -8,6 +8,11 @@ NC='\033[0m'
 
 FROST_DIR="/opt/frost"
 UPDATE_MARKER="$FROST_DIR/data/.update-requested"
+PRE_START=false
+
+if [ "$1" = "--pre-start" ]; then
+  PRE_START=true
+fi
 
 echo -e "${GREEN}Frost Update Script${NC}"
 echo ""
@@ -33,8 +38,10 @@ fi
 
 cd "$FROST_DIR"
 
-echo -e "${YELLOW}Stopping Frost...${NC}"
-systemctl stop frost 2>/dev/null || true
+if [ "$PRE_START" = false ]; then
+  echo -e "${YELLOW}Stopping Frost...${NC}"
+  systemctl stop frost 2>/dev/null || true
+fi
 
 echo -e "${YELLOW}Pulling latest changes...${NC}"
 git pull origin main
@@ -45,10 +52,16 @@ npm install --legacy-peer-deps --silent
 echo -e "${YELLOW}Building...${NC}"
 npm run build
 
-echo -e "${YELLOW}Starting Frost...${NC}"
-systemctl start frost
+if [ "$PRE_START" = false ]; then
+  echo -e "${YELLOW}Starting Frost...${NC}"
+  systemctl start frost
+fi
 
 echo ""
 echo -e "${GREEN}Update complete!${NC}"
 echo ""
-echo "Check status: systemctl status frost"
+if [ "$PRE_START" = true ]; then
+  echo "Frost will start automatically"
+else
+  echo "Check status: systemctl status frost"
+fi
