@@ -138,7 +138,7 @@ EOF
 
 # Install dependencies and build
 echo "Installing dependencies..."
-npm install --legacy-peer-deps --silent
+NODE_ENV=development npm install --legacy-peer-deps --silent
 
 echo "Building..."
 npm run build

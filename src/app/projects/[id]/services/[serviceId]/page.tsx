@@ -21,6 +21,7 @@ import {
 import type { Deployment, EnvVar } from "@/lib/api";
 import { api } from "@/lib/api";
 import { DeploymentRow } from "./_components/deployment-row";
+import { DomainsSection } from "./_components/domains-section";
 
 export default function ServicePage() {
   const params = useParams();
@@ -324,6 +325,11 @@ export default function ServicePage() {
               </dl>
             </CardContent>
           </Card>
+
+          <DomainsSection
+            serviceId={serviceId}
+            hasRunningDeployment={!!runningDeployment}
+          />
 
           <Card className="bg-neutral-900 border-neutral-800">
             <CardHeader className="pb-2">

@@ -110,7 +110,7 @@ log "Cleaning node_modules..."
 rm -rf node_modules package-lock.json
 
 log "Installing dependencies..."
-npm install --legacy-peer-deps --silent 2>&1
+NODE_ENV=development npm install --legacy-peer-deps --silent 2>&1
 
 log "Building..."
 npm run build 2>&1
