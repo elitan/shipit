@@ -1,7 +1,7 @@
 "use client";
 
-import { Eye, EyeOff, Plus, Trash2 } from "lucide-react";
-import { ClipboardEvent, useId, useState } from "react";
+import { Plus, Trash2 } from "lucide-react";
+import { ClipboardEvent, useId } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -37,7 +37,6 @@ function parseEnvContent(text: string): EnvVar[] {
 
 export function EnvVarEditor({ value, onChange }: EnvVarEditorProps) {
   const baseId = useId();
-  const [showValues, setShowValues] = useState<Record<string, boolean>>({});
 
   function handleAdd() {
     onChange([...value, { key: "", value: "" }]);
@@ -51,10 +50,6 @@ export function EnvVarEditor({ value, onChange }: EnvVarEditorProps) {
     const updated = [...value];
     updated[index] = { ...updated[index], [field]: val };
     onChange(updated);
-  }
-
-  function toggleShow(id: string) {
-    setShowValues((prev) => ({ ...prev, [id]: !prev[id] }));
   }
 
   function handlePaste(e: ClipboardEvent<HTMLInputElement>, index: number) {
@@ -76,7 +71,7 @@ export function EnvVarEditor({ value, onChange }: EnvVarEditorProps) {
         <div className="flex gap-2 text-xs text-muted-foreground font-medium">
           <div className="flex-1">KEY</div>
           <div className="flex-1">VALUE</div>
-          <div className="w-[72px]" />
+          <div className="w-9" />
         </div>
       )}
       {value.map((envVar, index) => {
@@ -89,27 +84,11 @@ export function EnvVarEditor({ value, onChange }: EnvVarEditorProps) {
               onPaste={(e) => handlePaste(e, index)}
               className="flex-1 font-mono text-sm"
             />
-            <div className="relative flex-1">
-              <Input
-                type={showValues[id] ? "text" : "password"}
-                value={envVar.value}
-                onChange={(e) => handleChange(index, "value", e.target.value)}
-                className="pr-10 font-mono text-sm"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute right-0 top-0 h-9 w-9 opacity-50 hover:opacity-100"
-                onClick={() => toggleShow(id)}
-              >
-                {showValues[id] ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
+            <Input
+              value={envVar.value}
+              onChange={(e) => handleChange(index, "value", e.target.value)}
+              className="flex-1 font-mono text-sm"
+            />
             <Button
               type="button"
               variant="ghost"
@@ -122,9 +101,14 @@ export function EnvVarEditor({ value, onChange }: EnvVarEditorProps) {
           </div>
         );
       })}
-      <Button type="button" variant="outline" size="sm" onClick={handleAdd}>
-        <Plus className="mr-1 h-4 w-4" />
-        Add Variable
+      <Button
+        type="button"
+        variant="ghost"
+        onClick={handleAdd}
+        className="h-8 px-2 text-muted-foreground"
+      >
+        <Plus className="h-4 w-4 mr-1" />
+        Add
       </Button>
     </div>
   );
