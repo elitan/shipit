@@ -1,6 +1,6 @@
 # Frost
 
-Simple deployment platform. Docker-only, single-user.
+Open source Vercel alternative.
 
 ## Features
 
