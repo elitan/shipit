@@ -30,6 +30,7 @@ export default function SettingsPage() {
     "false",
   );
   const [pollingTimedOut, setPollingTimedOut] = useState(false);
+  const [staging, setStaging] = useState(false);
 
   useEffect(() => {
     fetch("/api/settings")
@@ -122,7 +123,7 @@ export default function SettingsPage() {
       const res = await fetch("/api/settings/enable-ssl", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ domain, email }),
+        body: JSON.stringify({ domain, email, staging }),
       });
 
       const data = await res.json();
@@ -265,6 +266,29 @@ export default function SettingsPage() {
                   Used for Let's Encrypt SSL certificates
                 </p>
               </div>
+
+              {sslStatus === "false" && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <input
+                      id="staging"
+                      type="checkbox"
+                      checked={staging}
+                      onChange={(e) => setStaging(e.target.checked)}
+                      className="h-4 w-4 rounded border-neutral-700 bg-neutral-800"
+                    />
+                    <Label htmlFor="staging" className="text-neutral-300">
+                      Use staging certificates (for testing)
+                    </Label>
+                  </div>
+                  {staging && (
+                    <p className="text-xs text-yellow-500">
+                      Staging certs are not trusted by browsers. Use only for
+                      testing.
+                    </p>
+                  )}
+                </>
+              )}
 
               {error && <p className="text-sm text-red-400">{error}</p>}
 

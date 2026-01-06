@@ -19,8 +19,9 @@ export async function POST(request: Request) {
       await setSetting("ssl_enabled", "true");
 
       const email = await getSetting("email");
+      const staging = (await getSetting("ssl_staging")) === "true";
       if (email) {
-        await lockToDomain(domain, email);
+        await lockToDomain(domain, email, staging);
       }
 
       return NextResponse.json({ working: true });

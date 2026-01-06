@@ -33,7 +33,7 @@ async function verifyDns(domain: string): Promise<boolean> {
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { domain, email } = body;
+  const { domain, email, staging = false } = body;
 
   if (!domain) {
     return NextResponse.json({ error: "domain is required" }, { status: 400 });
@@ -63,11 +63,12 @@ export async function POST(request: Request) {
   }
 
   try {
-    await configureDomain(domain, email);
+    await configureDomain(domain, email, staging);
 
     await setSetting("domain", domain);
     await setSetting("email", email);
     await setSetting("ssl_enabled", "pending");
+    await setSetting("ssl_staging", staging ? "true" : "false");
 
     return NextResponse.json({ success: true, status: "pending" });
   } catch (error) {

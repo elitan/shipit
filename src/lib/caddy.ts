@@ -1,4 +1,12 @@
 const CADDY_ADMIN = "http://localhost:2019";
+const ACME_STAGING_CA =
+  "https://acme-staging-v02.api.letsencrypt.org/directory";
+
+function acmeIssuer(email: string, staging: boolean) {
+  return staging
+    ? { module: "acme", email, ca: ACME_STAGING_CA }
+    : { module: "acme", email };
+}
 
 export async function isCaddyRunning(): Promise<boolean> {
   try {
@@ -20,6 +28,7 @@ export async function getCurrentConfig(): Promise<unknown> {
 export async function configureDomain(
   domain: string,
   email: string,
+  staging = false,
 ): Promise<void> {
   const config = {
     apps: {
@@ -71,7 +80,7 @@ export async function configureDomain(
           policies: [
             {
               subjects: [domain],
-              issuers: [{ module: "acme", email }],
+              issuers: [acmeIssuer(email, staging)],
             },
           ],
         },
@@ -94,6 +103,7 @@ export async function configureDomain(
 export async function lockToDomain(
   domain: string,
   email: string,
+  staging = false,
 ): Promise<void> {
   const config = {
     apps: {
@@ -148,7 +158,7 @@ export async function lockToDomain(
           policies: [
             {
               subjects: [domain],
-              issuers: [{ module: "acme", email }],
+              issuers: [acmeIssuer(email, staging)],
             },
           ],
         },
