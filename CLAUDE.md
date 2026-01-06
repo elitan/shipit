@@ -10,7 +10,7 @@ Simple deployment platform. Docker-only, single-user.
 - `repo`: builds from git repo (repo_url, branch, dockerfile_path)
 - `image`: pulls pre-built image (image_url)
 
-**IMPORTANT**: Apps must listen on `PORT` env var (default 8080). Pre-built images like nginx/whoami that ignore PORT won't work. Use images that respect PORT (e.g., `gcr.io/google-samples/hello-app:1.0`).
+**PORT handling** (like Cloud Run): Apps should listen on `PORT` env var (default 8080). For images that ignore PORT and have a hardcoded port, set `container_port` on the service to match.
 
 Services communicate via Docker network using service name as hostname.
 
