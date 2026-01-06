@@ -79,10 +79,12 @@ jobs:
           new_version="${{ steps.new.outputs.version }}"
 
           if [ -z "$last_tag" ]; then
-            commits=$(git log --pretty=format:"%s" --no-merges)
+            commits=$(git log --pretty=format:"%h|%s" --no-merges)
           else
-            commits=$(git log --pretty=format:"%s" --no-merges "$last_tag"..HEAD^)
+            commits=$(git log --pretty=format:"%h|%s" --no-merges "$last_tag"..HEAD^)
           fi
+
+          repo="elitan/frost"
 
           breaking=""
           features=""
@@ -91,18 +93,28 @@ jobs:
           refactor=""
           perf=""
 
-          # Parse commit message, strip type/scope prefix, capitalize
-          parse_msg() {
-            local msg="$1"
-            msg=$(echo "$msg" | sed -E 's/^[a-z]+(\([^)]+\))?!?: //')
-            echo "$(echo "${msg:0:1}" | tr '[:lower:]' '[:upper:]')${msg:1}"
+          # Parse commit: strip type prefix, capitalize, add links
+          parse_commit() {
+            local hash="$1"
+            local msg="$2"
+
+            # Strip type/scope prefix
+            local text=$(echo "$msg" | sed -E 's/^[a-z]+(\([^)]+\))?!?: //')
+            # Capitalize first letter
+            text="$(echo "${text:0:1}" | tr '[:lower:]' '[:upper:]')${text:1}"
+
+            # Convert PR references (#123) to links
+            text=$(echo "$text" | sed -E "s/#([0-9]+)/[#\1](https:\/\/github.com\/$repo\/pull\/\1)/g")
+
+            # Add commit link
+            echo "$text ([\`$hash\`](https://github.com/$repo/commit/$hash))"
           }
 
-          while IFS= read -r msg; do
+          while IFS='|' read -r hash msg; do
             [ -z "$msg" ] && continue
             [[ "$msg" =~ ^chore: ]] && continue
 
-            parsed=$(parse_msg "$msg")
+            parsed=$(parse_commit "$hash" "$msg")
 
             if [[ "$msg" =~ !: ]] || [[ "$msg" =~ BREAKING ]]; then
               breaking="$breaking\n- $parsed"
