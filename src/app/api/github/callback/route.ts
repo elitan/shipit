@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getSetting } from "@/lib/auth";
 import {
   exchangeCodeForCredentials,
   saveGitHubAppCredentials,
@@ -7,11 +8,11 @@ import {
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
+  const domain = await getSetting("domain");
+  const baseUrl = domain ? `https://${domain}` : url.origin;
 
   if (!code) {
-    return NextResponse.redirect(
-      new URL("/settings/github?error=missing_code", request.url),
-    );
+    return NextResponse.redirect(new URL("/settings/github?error=missing_code", baseUrl));
   }
 
   try {
@@ -34,7 +35,7 @@ export async function GET(request: Request) {
     return NextResponse.redirect(
       new URL(
         `/settings/github?error=${encodeURIComponent(err.message)}`,
-        request.url,
+        baseUrl,
       ),
     );
   }
