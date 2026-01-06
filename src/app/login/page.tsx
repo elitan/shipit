@@ -1,7 +1,6 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -35,8 +33,7 @@ export default function LoginPage() {
         return;
       }
 
-      router.push("/");
-      router.refresh();
+      window.location.href = "/";
     } catch {
       setError("Login failed");
       setLoading(false);
