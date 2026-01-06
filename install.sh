@@ -63,10 +63,18 @@ if ! command -v caddy &> /dev/null; then
   apt-get update -qq
   apt-get install -y -qq caddy > /dev/null
   systemctl enable caddy
-  systemctl start caddy
 else
   echo "Caddy already installed"
 fi
+
+# Configure Caddy to proxy to Frost
+echo "Configuring Caddy..."
+cat > /etc/caddy/Caddyfile << 'EOF'
+:80 {
+  reverse_proxy localhost:3000
+}
+EOF
+systemctl restart caddy
 
 # Install Node.js if not present
 if ! command -v node &> /dev/null; then
@@ -172,14 +180,14 @@ FROST_API_KEY=$(echo -n "${FROST_JWT_SECRET}frost-api-key" | sha256sum | cut -c1
 echo ""
 echo -e "${GREEN}Installation complete!${NC}"
 echo ""
-echo -e "Frost is running at: ${GREEN}http://$SERVER_IP:3000${NC}"
+echo -e "Frost is running at: ${GREEN}http://$SERVER_IP${NC}"
 echo ""
 echo -e "API Key: ${YELLOW}$FROST_API_KEY${NC}"
 echo "(use with X-Frost-Token header)"
 echo ""
 echo "Next steps:"
 echo "  1. Point your domain to $SERVER_IP"
-echo "  2. Go to Settings in Frost to configure SSL"
+echo "  2. Go to Settings in Frost to configure domain and SSL"
 echo ""
 echo "Useful commands:"
 echo "  systemctl status frost    - check status"
