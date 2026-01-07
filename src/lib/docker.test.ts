@@ -149,4 +149,16 @@ describe("runContainer", () => {
     expect(capturedExecCmd).toContain("--network frost-net-123");
     expect(capturedExecCmd).toContain("--hostname my-service");
   });
+
+  test("includes restart policy", async () => {
+    const { runContainer } = await import("./docker");
+
+    await runContainer({
+      imageName: "test-image:latest",
+      hostPort: 10001,
+      name: "test-container",
+    });
+
+    expect(capturedExecCmd).toContain("--restart on-failure:5");
+  });
 });

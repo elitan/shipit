@@ -130,7 +130,7 @@ export async function runContainer(
     const networkFlag = network ? `--network ${network}` : "";
     const hostnameFlag = hostname ? `--hostname ${hostname}` : "";
     const { stdout } = await execAsync(
-      `docker run -d --name ${name} -p ${hostPort}:${containerPort} ${networkFlag} ${hostnameFlag} ${envFlags} ${imageName}`.replace(
+      `docker run -d --restart on-failure:5 --name ${name} -p ${hostPort}:${containerPort} ${networkFlag} ${hostnameFlag} ${envFlags} ${imageName}`.replace(
         /\s+/g,
         " ",
       ),
