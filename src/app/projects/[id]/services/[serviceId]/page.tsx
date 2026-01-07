@@ -20,8 +20,10 @@ import {
 } from "@/hooks/use-services";
 import type { Deployment, EnvVar } from "@/lib/api";
 import { api } from "@/lib/api";
+import { cn } from "@/lib/utils";
 import { DeploymentRow } from "./_components/deployment-row";
 import { DomainsSection } from "./_components/domains-section";
+import { RuntimeLogs } from "./_components/runtime-logs";
 
 export default function ServicePage() {
   const params = useParams();
@@ -45,6 +47,7 @@ export default function ServicePage() {
   const [editingHealth, setEditingHealth] = useState(false);
   const [healthPath, setHealthPath] = useState<string>("");
   const [healthTimeout, setHealthTimeout] = useState<number>(60);
+  const [activeLogTab, setActiveLogTab] = useState<"build" | "runtime">("build");
 
   useEffect(() => {
     api.settings.get().then((s) => setServerIp(s.server_ip));
@@ -301,19 +304,50 @@ export default function ServicePage() {
                 <Card className="bg-neutral-900 border-neutral-800">
                   <CardHeader className="pb-2">
                     <CardTitle className="flex items-center justify-between text-sm font-medium text-neutral-300">
-                      <span>Build Log</span>
+                      <div className="flex items-center gap-4">
+                        <button
+                          onClick={() => setActiveLogTab("build")}
+                          className={cn(
+                            "border-b-2 pb-1 transition-colors",
+                            activeLogTab === "build"
+                              ? "border-white text-white"
+                              : "border-transparent text-neutral-500 hover:text-neutral-300",
+                          )}
+                        >
+                          Build
+                        </button>
+                        {selectedDeployment.status === "running" && (
+                          <button
+                            onClick={() => setActiveLogTab("runtime")}
+                            className={cn(
+                              "border-b-2 pb-1 transition-colors",
+                              activeLogTab === "runtime"
+                                ? "border-white text-white"
+                                : "border-transparent text-neutral-500 hover:text-neutral-300",
+                            )}
+                          >
+                            Runtime
+                          </button>
+                        )}
+                      </div>
                       <StatusDot status={selectedDeployment.status} showLabel />
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {selectedDeployment.error_message && (
-                      <div className="mb-4 rounded border border-red-900 bg-red-950/50 p-3 text-sm text-red-400">
-                        {selectedDeployment.error_message}
-                      </div>
+                    {activeLogTab === "build" ? (
+                      <>
+                        {selectedDeployment.error_message && (
+                          <div className="mb-4 rounded border border-red-900 bg-red-950/50 p-3 text-sm text-red-400">
+                            {selectedDeployment.error_message}
+                          </div>
+                        )}
+                        <pre className="max-h-96 overflow-auto rounded bg-neutral-950 p-4 font-mono text-xs text-neutral-400">
+                          {selectedDeployment.build_log || "No logs yet..."}
+                        </pre>
+                      </>
+                    ) : (
+                      <RuntimeLogs deploymentId={selectedDeployment.id} />
                     )}
-                    <pre className="max-h-96 overflow-auto rounded bg-neutral-950 p-4 font-mono text-xs text-neutral-400">
-                      {selectedDeployment.build_log || "No logs yet..."}
-                    </pre>
                   </CardContent>
                 </Card>
               )}

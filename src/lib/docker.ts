@@ -130,8 +130,9 @@ export async function runContainer(
       .join(" ");
     const networkFlag = network ? `--network ${network}` : "";
     const hostnameFlag = hostname ? `--hostname ${hostname}` : "";
+    const logOpts = "--log-opt max-size=10m --log-opt max-file=3";
     const { stdout } = await execAsync(
-      `docker run -d --restart on-failure:5 --name ${name} -p ${hostPort}:${containerPort} ${networkFlag} ${hostnameFlag} ${envFlags} ${imageName}`.replace(
+      `docker run -d --restart on-failure:5 ${logOpts} --name ${name} -p ${hostPort}:${containerPort} ${networkFlag} ${hostnameFlag} ${envFlags} ${imageName}`.replace(
         /\s+/g,
         " ",
       ),
@@ -277,4 +278,54 @@ export async function removeNetwork(name: string): Promise<void> {
   } catch {
     // Network might not exist or have containers attached
   }
+}
+
+export interface StreamLogsOptions {
+  tail?: number;
+  timestamps?: boolean;
+  onData: (line: string) => void;
+  onError: (err: Error) => void;
+  onClose: () => void;
+}
+
+export function streamContainerLogs(
+  containerId: string,
+  options: StreamLogsOptions,
+): { stop: () => void } {
+  const { tail = 100, timestamps = true, onData, onError, onClose } = options;
+  const args = ["logs", "-f", "--tail", String(tail)];
+  if (timestamps) {
+    args.push("--timestamps");
+  }
+  args.push(containerId);
+
+  const proc = spawn("docker", args);
+
+  proc.stdout.on("data", (data: Buffer) => {
+    const lines = data.toString().split("\n").filter(Boolean);
+    for (const line of lines) {
+      onData(line);
+    }
+  });
+
+  proc.stderr.on("data", (data: Buffer) => {
+    const lines = data.toString().split("\n").filter(Boolean);
+    for (const line of lines) {
+      onData(line);
+    }
+  });
+
+  proc.on("error", (err) => {
+    onError(err);
+  });
+
+  proc.on("close", () => {
+    onClose();
+  });
+
+  return {
+    stop: () => {
+      proc.kill();
+    },
+  };
 }
