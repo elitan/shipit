@@ -274,6 +274,7 @@ export function SystemSection() {
 
         {showLog && updateResult?.log && (
           <pre className="max-h-64 overflow-auto rounded bg-neutral-900 p-3 text-xs text-neutral-300">
+            {/* biome-ignore lint/suspicious/noControlCharactersInRegex: stripping ANSI escape codes */}
             {updateResult.log.replace(/\x1b\[[0-9;]*m/g, "")}
           </pre>
         )}
@@ -309,29 +310,29 @@ export function SystemSection() {
 
             {status?.availableVersion &&
               status.availableVersion !== status.currentVersion && (
-              <div className="rounded-lg border border-blue-800 bg-blue-900/20 p-4">
-                <div className="flex items-center justify-between">
-                  <p className="font-medium text-blue-400">
-                    Update Available: v{status.availableVersion}
-                  </p>
-                  {status.publishedAt && (
-                    <p className="text-xs text-neutral-400">
-                      Released {formatPublishedAt(status.publishedAt)}
+                <div className="rounded-lg border border-blue-800 bg-blue-900/20 p-4">
+                  <div className="flex items-center justify-between">
+                    <p className="font-medium text-blue-400">
+                      Update Available: v{status.availableVersion}
                     </p>
+                    {status.publishedAt && (
+                      <p className="text-xs text-neutral-400">
+                        Released {formatPublishedAt(status.publishedAt)}
+                      </p>
+                    )}
+                  </div>
+
+                  {status.hasMigrations && (
+                    <div className="mt-3 flex items-start gap-2 rounded bg-yellow-900/30 p-2 text-yellow-400">
+                      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                      <p className="text-xs">
+                        This update includes database migrations. Back up your
+                        data before updating.
+                      </p>
+                    </div>
                   )}
                 </div>
-
-                {status.hasMigrations && (
-                  <div className="mt-3 flex items-start gap-2 rounded bg-yellow-900/30 p-2 text-yellow-400">
-                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-                    <p className="text-xs">
-                      This update includes database migrations. Back up your
-                      data before updating.
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
+              )}
 
             {status && !status.availableVersion && (
               <div className="flex items-center gap-2 text-green-400">

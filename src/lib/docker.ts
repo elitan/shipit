@@ -111,7 +111,15 @@ export interface RunContainerOptions {
 export async function runContainer(
   options: RunContainerOptions,
 ): Promise<RunResult> {
-  const { imageName, hostPort, containerPort = DEFAULT_PORT, name, envVars, network, hostname } = options;
+  const {
+    imageName,
+    hostPort,
+    containerPort = DEFAULT_PORT,
+    name,
+    envVars,
+    network,
+    hostname,
+  } = options;
   try {
     await stopContainer(name);
 

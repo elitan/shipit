@@ -9,7 +9,9 @@ export async function GET() {
     getSetting("domain"),
     getSetting("email"),
     getSetting("ssl_enabled"),
-    isDev ? Promise.resolve("localhost") : getServerIp().catch(() => "localhost"),
+    isDev
+      ? Promise.resolve("localhost")
+      : getServerIp().catch(() => "localhost"),
   ]);
 
   return NextResponse.json({

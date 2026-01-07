@@ -69,7 +69,10 @@ export async function POST(
     );
   }
 
-  if (container_port !== undefined && (container_port < 1 || container_port > 65535)) {
+  if (
+    container_port !== undefined &&
+    (container_port < 1 || container_port > 65535)
+  ) {
     return NextResponse.json(
       { error: "container_port must be between 1 and 65535" },
       { status: 400 },

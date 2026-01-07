@@ -8,7 +8,6 @@ import {
   ChevronUp,
   Copy,
   ExternalLink,
-  Globe,
   Loader2,
   Plus,
   RefreshCw,
@@ -69,6 +68,7 @@ export function DomainsSection({
       ?.filter((d) => d.dns_verified === 1 && d.ssl_status !== "active")
       .map((d) => d.id) || [];
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: unverifiedDomainIds changes on every render, use length as proxy
   useEffect(() => {
     if (unverifiedDomainIds.length === 0) return;
 
@@ -87,8 +87,9 @@ export function DomainsSection({
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [unverifiedDomainIds.join(","), verifyDnsMutation, domains]);
+  }, [unverifiedDomainIds.length, verifyDnsMutation, domains]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: pendingSslDomainIds changes on every render, use length as proxy
   useEffect(() => {
     if (pendingSslDomainIds.length === 0) return;
 
@@ -107,7 +108,7 @@ export function DomainsSection({
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [pendingSslDomainIds.join(","), verifySslMutation, domains]);
+  }, [pendingSslDomainIds.length, verifySslMutation, domains]);
 
   async function handleAddDomain() {
     if (!newDomain) return;
@@ -358,13 +359,15 @@ function CopyButton({ text }: { text: string }) {
   }
 
   return (
-    <button
+    <Button
+      variant="ghost"
+      size="icon"
       onClick={handleCopy}
-      className="p-1 text-neutral-500 hover:text-neutral-300 transition-colors"
+      className="h-5 w-5 text-neutral-500 hover:text-neutral-300"
       title="Copy to clipboard"
     >
       <Copy className="h-3 w-3" />
-    </button>
+    </Button>
   );
 }
 
@@ -433,9 +436,11 @@ function DomainRow({
                   >
                     Verification Needed
                   </Badge>
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => setIsExpanded(!isExpanded)}
-                    className="flex items-center gap-1 text-xs text-neutral-400 hover:text-neutral-200"
+                    className="h-auto px-1 py-0 text-xs text-neutral-400 hover:text-neutral-200"
                   >
                     Learn more
                     {isExpanded ? (
@@ -443,7 +448,7 @@ function DomainRow({
                     ) : (
                       <ChevronDown className="h-3 w-3" />
                     )}
-                  </button>
+                  </Button>
                 </>
               )}
               {domain.type === "redirect" && (

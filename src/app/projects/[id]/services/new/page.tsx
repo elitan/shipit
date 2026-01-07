@@ -39,7 +39,10 @@ export default function NewServicePage() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const validEnvVars = envVars.filter((v) => v.key.trim() !== "");
-    const containerPort = parseInt(formData.get("container_port") as string, 10);
+    const containerPort = parseInt(
+      formData.get("container_port") as string,
+      10,
+    );
 
     const data: CreateServiceInput = {
       name: formData.get("name") as string,
@@ -294,7 +297,10 @@ export default function NewServicePage() {
                   </p>
 
                   <div className="grid gap-3">
-                    <Label htmlFor="container_port" className="text-neutral-300">
+                    <Label
+                      htmlFor="container_port"
+                      className="text-neutral-300"
+                    >
                       Container Port
                     </Label>
                     <Input
