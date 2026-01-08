@@ -324,6 +324,12 @@ echo "Created service: $SERVICE5_ID"
 
 DEPLOY5=$(api -X POST "$BASE_URL/api/services/$SERVICE5_ID/deploy")
 DEPLOY5_ID=$(echo "$DEPLOY5" | jq -r '.deployment_id')
+if [ "$DEPLOY5_ID" = "null" ] || [ -z "$DEPLOY5_ID" ]; then
+  echo "Deploy failed:"
+  echo "$DEPLOY5" | jq
+  exit 1
+fi
+echo "Started deployment: $DEPLOY5_ID"
 wait_for_deployment "$DEPLOY5_ID"
 
 DOMAINS=$(api "$BASE_URL/api/services/$SERVICE5_ID/domains")
