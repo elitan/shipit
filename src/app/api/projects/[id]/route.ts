@@ -106,7 +106,7 @@ export async function DELETE(
 
   const deployments = await db
     .selectFrom("deployments")
-    .select("containerId")
+    .select(["id", "containerId"])
     .where("projectId", "=", id)
     .execute();
 

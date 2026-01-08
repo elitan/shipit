@@ -4,7 +4,7 @@ PRAGMA foreign_keys = OFF;
 -- Create services table (extracted from projects)
 CREATE TABLE services (
   id TEXT PRIMARY KEY,
-  project_id TEXT NOT NULL,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   deploy_type TEXT NOT NULL DEFAULT 'repo',
   repo_url TEXT,
@@ -50,8 +50,8 @@ ALTER TABLE projects_new RENAME TO projects;
 -- Add service_id to deployments
 CREATE TABLE deployments_new (
   id TEXT PRIMARY KEY,
-  project_id TEXT NOT NULL,
-  service_id TEXT NOT NULL,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  service_id TEXT NOT NULL REFERENCES services(id) ON DELETE CASCADE,
   commit_sha TEXT NOT NULL,
   commit_message TEXT,
   status TEXT NOT NULL DEFAULT 'pending',

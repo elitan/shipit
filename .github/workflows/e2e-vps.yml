@@ -14,7 +14,7 @@ env:
 jobs:
   e2e-vps:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
@@ -97,15 +97,17 @@ jobs:
           INSTALL_URL="https://raw.githubusercontent.com/${REPO}/${BRANCH}/install.sh"
 
           echo "Installing from: $INSTALL_URL"
+          echo "Using branch: $BRANCH"
 
-          OUTPUT=$(ssh root@${{ steps.server.outputs.ip }} "curl -fsSL '$INSTALL_URL' -o /tmp/install.sh && chmod +x /tmp/install.sh && echo '${{ secrets.FROST_TEST_PASSWORD }}' | /tmp/install.sh" 2>&1)
+          # Stream output to both file and stdout for debugging
+          ssh -o ServerAliveInterval=30 root@${{ steps.server.outputs.ip }} "curl -fsSL '$INSTALL_URL' -o /tmp/install.sh && chmod +x /tmp/install.sh && echo '${{ secrets.FROST_TEST_PASSWORD }}' | /tmp/install.sh -b '$BRANCH'" 2>&1 | tee /tmp/install-output.txt
 
-          echo "$OUTPUT"
-
-          API_KEY=$(echo "$OUTPUT" | sed 's/\x1b\[[0-9;]*m//g' | grep "API Key:" | awk '{print $3}')
+          API_KEY=$(cat /tmp/install-output.txt | sed 's/\x1b\[[0-9;]*m//g' | grep "API Key:" | awk '{print $3}')
 
           if [ -z "$API_KEY" ]; then
             echo "Failed to extract API key"
+            echo "=== Full install output ==="
+            cat /tmp/install-output.txt
             exit 1
           fi
 
@@ -135,8 +137,8 @@ jobs:
       - name: Collect logs on failure
         if: failure()
         run: |
-          echo "=== Frost logs ==="
-          ssh root@${{ steps.server.outputs.ip }} "journalctl -u frost --no-pager -n 100" || true
+          echo "=== Frost logs (last 500 lines) ==="
+          ssh root@${{ steps.server.outputs.ip }} "journalctl -u frost --no-pager -n 500" || true
           echo ""
           echo "=== Caddy logs ==="
           ssh root@${{ steps.server.outputs.ip }} "journalctl -u caddy --no-pager -n 50" || true

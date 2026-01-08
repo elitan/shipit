@@ -18,7 +18,14 @@ export async function POST(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const deploymentId = await deployService(id);
-
-  return NextResponse.json({ deployment_id: deploymentId }, { status: 202 });
+  try {
+    const deploymentId = await deployService(id);
+    return NextResponse.json({ deployment_id: deploymentId }, { status: 202 });
+  } catch (error) {
+    console.error(`Deploy failed for service ${id}:`, error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Deploy failed" },
+      { status: 500 },
+    );
+  }
 }
