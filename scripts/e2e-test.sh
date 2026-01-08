@@ -13,7 +13,7 @@ fi
 echo "Running E2E tests against $BASE_URL"
 
 api() {
-  curl -s -H "X-Frost-Token: $API_KEY" -H "Content-Type: application/json" "$@"
+  curl -sS --max-time 30 -H "X-Frost-Token: $API_KEY" -H "Content-Type: application/json" "$@"
 }
 
 wait_for_deployment() {
@@ -324,9 +324,13 @@ SERVICE5=$(api -X POST "$BASE_URL/api/projects/$PROJECT5_ID/services" \
 SERVICE5_ID=$(echo "$SERVICE5" | jq -r '.id')
 echo "Created service: $SERVICE5_ID"
 
-echo "Calling deploy API..."
-DEPLOY5=$(api -X POST "$BASE_URL/api/services/$SERVICE5_ID/deploy")
-echo "Deploy response: $DEPLOY5"
+echo "Calling deploy API for service $SERVICE5_ID..."
+DEPLOY5_RESP=$(curl -sS --max-time 30 -w "\nHTTP_STATUS:%{http_code}" \
+  -H "X-Frost-Token: $API_KEY" -H "Content-Type: application/json" \
+  -X POST "$BASE_URL/api/services/$SERVICE5_ID/deploy")
+DEPLOY5=$(echo "$DEPLOY5_RESP" | sed '/^HTTP_STATUS:/d')
+HTTP_STATUS=$(echo "$DEPLOY5_RESP" | grep "HTTP_STATUS:" | cut -d: -f2)
+echo "Deploy response (HTTP $HTTP_STATUS): $DEPLOY5"
 DEPLOY5_ID=$(echo "$DEPLOY5" | jq -r '.deployment_id')
 if [ "$DEPLOY5_ID" = "null" ] || [ -z "$DEPLOY5_ID" ]; then
   echo "Deploy failed - deployment_id is null or empty"
