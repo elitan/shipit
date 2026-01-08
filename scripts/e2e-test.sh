@@ -307,7 +307,7 @@ echo ""
 echo "=== Test 17: Enable SSL with staging certs ==="
 FROST_DOMAIN="frost.$SERVER_IP.sslip.io"
 SSL_RESULT=$(api -X POST "$BASE_URL/api/settings/enable-ssl" \
-  -d "{\"domain\":\"$FROST_DOMAIN\",\"email\":\"test@example.com\",\"staging\":true}")
+  -d "{\"domain\":\"$FROST_DOMAIN\",\"email\":\"frost-e2e@j4labs.se\",\"staging\":true}")
 SSL_SUCCESS=$(echo "$SSL_RESULT" | jq -r '.success // .error')
 echo "SSL enable result: $SSL_SUCCESS"
 echo "Waiting for Caddy to stabilize..."
