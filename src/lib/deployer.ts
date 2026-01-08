@@ -148,6 +148,13 @@ async function runServiceDeployment(
   const containerName = `frost-${project.id}-${service.name}`.toLowerCase();
   const networkName = `frost-net-${project.id}`.toLowerCase();
 
+  const baseLabels = {
+    "frost.managed": "true",
+    "frost.project.id": project.id,
+    "frost.service.id": service.id,
+    "frost.service.name": service.name,
+  };
+
   const projectEnvVars = parseEnvVars(project.env_vars);
   const serviceEnvVars = parseEnvVars(service.env_vars);
   const envVars = { ...projectEnvVars, ...serviceEnvVars };
@@ -244,12 +251,13 @@ async function runServiceDeployment(
 
       imageName =
         `frost-${project.id}-${service.name}:${commitSha}`.toLowerCase();
-      const buildResult = await buildImage(
+      const buildResult = await buildImage({
         repoPath,
         imageName,
-        service.dockerfile_path,
+        dockerfilePath: service.dockerfile_path,
         envVars,
-      );
+        labels: baseLabels,
+      });
 
       await appendLog(deploymentId, buildResult.log);
 
@@ -261,7 +269,7 @@ async function runServiceDeployment(
     await updateDeployment(deploymentId, { status: "deploying" });
     await appendLog(deploymentId, `\nStarting container...\n`);
 
-    await createNetwork(networkName);
+    await createNetwork(networkName, baseLabels);
 
     const hostPort = await getAvailablePort();
     const runResult = await runContainer({
@@ -272,6 +280,10 @@ async function runServiceDeployment(
       envVars,
       network: networkName,
       hostname: service.name,
+      labels: {
+        ...baseLabels,
+        "frost.deployment.id": deploymentId,
+      },
     });
 
     if (!runResult.success) {

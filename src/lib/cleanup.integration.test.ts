@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { promisify } from "node:util";
 import {
   buildImage,
+  createNetwork,
   getImageCreatedAt,
   getImageSize,
   getRunningImageNames,
@@ -14,7 +15,6 @@ import {
   removeNetwork,
   runContainer,
   stopContainer,
-  createNetwork,
 } from "./docker";
 
 const execAsync = promisify(exec);
@@ -23,27 +23,61 @@ const TEST_PREFIX = "frost-cleanup-test";
 const TEST_NETWORK = "frost-net-cleanup-test";
 const FIXTURE_PATH = join(process.cwd(), "test/fixtures/simple-node");
 
+const TEST_LABELS = {
+  "frost.managed": "true",
+  "frost.project.id": "test-project",
+  "frost.service.id": "test-service",
+  "frost.service.name": "test-svc",
+};
+
 describe("cleanup docker functions", () => {
   beforeAll(async () => {
-    await execAsync(`docker rmi $(docker images -q '${TEST_PREFIX}*') 2>/dev/null || true`);
-    await execAsync(`docker rm -f $(docker ps -aq --filter name=${TEST_PREFIX}) 2>/dev/null || true`);
+    await execAsync(
+      `docker rmi $(docker images -q '${TEST_PREFIX}*') 2>/dev/null || true`,
+    );
+    await execAsync(
+      `docker rm -f $(docker ps -aq --filter name=${TEST_PREFIX}) 2>/dev/null || true`,
+    );
     await execAsync(`docker network rm ${TEST_NETWORK} 2>/dev/null || true`);
   }, 30000);
 
   afterAll(async () => {
-    await execAsync(`docker rmi $(docker images -q '${TEST_PREFIX}*') 2>/dev/null || true`);
-    await execAsync(`docker rm -f $(docker ps -aq --filter name=${TEST_PREFIX}) 2>/dev/null || true`);
+    await execAsync(
+      `docker rmi $(docker images -q '${TEST_PREFIX}*') 2>/dev/null || true`,
+    );
+    await execAsync(
+      `docker rm -f $(docker ps -aq --filter name=${TEST_PREFIX}) 2>/dev/null || true`,
+    );
     await execAsync(`docker network rm ${TEST_NETWORK} 2>/dev/null || true`);
   }, 30000);
 
-  test("listFrostImages returns frost-prefixed images", async () => {
-    const result = await buildImage(FIXTURE_PATH, `${TEST_PREFIX}-svc:v1`, "Dockerfile");
+  test("listFrostImages returns labeled images only", async () => {
+    const result = await buildImage({
+      repoPath: FIXTURE_PATH,
+      imageName: `${TEST_PREFIX}-svc:v1`,
+      dockerfilePath: "Dockerfile",
+      labels: TEST_LABELS,
+    });
     expect(result.success).toBe(true);
 
     const images = await listFrostImages();
     const testImages = images.filter((i) => i.startsWith(TEST_PREFIX));
     expect(testImages.length).toBeGreaterThanOrEqual(1);
     expect(testImages).toContain(`${TEST_PREFIX}-svc:v1`);
+  }, 60000);
+
+  test("unlabeled images are not returned by listFrostImages", async () => {
+    const result = await buildImage({
+      repoPath: FIXTURE_PATH,
+      imageName: `${TEST_PREFIX}-unlabeled:v1`,
+      dockerfilePath: "Dockerfile",
+    });
+    expect(result.success).toBe(true);
+
+    const images = await listFrostImages();
+    expect(images).not.toContain(`${TEST_PREFIX}-unlabeled:v1`);
+
+    await removeImage(`${TEST_PREFIX}-unlabeled:v1`);
   }, 60000);
 
   test("getImageCreatedAt returns valid date", async () => {
@@ -58,7 +92,12 @@ describe("cleanup docker functions", () => {
   });
 
   test("removeImage deletes an image", async () => {
-    await buildImage(FIXTURE_PATH, `${TEST_PREFIX}-todelete:v1`, "Dockerfile");
+    await buildImage({
+      repoPath: FIXTURE_PATH,
+      imageName: `${TEST_PREFIX}-todelete:v1`,
+      dockerfilePath: "Dockerfile",
+      labels: TEST_LABELS,
+    });
 
     const before = await listFrostImages();
     expect(before).toContain(`${TEST_PREFIX}-todelete:v1`);
@@ -76,6 +115,7 @@ describe("cleanup docker functions", () => {
       hostPort: 19998,
       containerPort: 3000,
       name: `${TEST_PREFIX}-container`,
+      labels: TEST_LABELS,
     });
     expect(run.success).toBe(true);
 
@@ -85,15 +125,29 @@ describe("cleanup docker functions", () => {
     await stopContainer(`${TEST_PREFIX}-container`);
   }, 30000);
 
-  test("listFrostNetworks returns frost-net-prefixed networks", async () => {
-    await createNetwork(TEST_NETWORK);
+  test("listFrostNetworks returns labeled networks only", async () => {
+    await createNetwork(TEST_NETWORK, TEST_LABELS);
 
     const networks = await listFrostNetworks();
     expect(networks).toContain(TEST_NETWORK);
   });
 
+  test("unlabeled networks are not returned by listFrostNetworks", async () => {
+    const unlabeledNetwork = "frost-net-unlabeled-test";
+    await execAsync(
+      `docker network create ${unlabeledNetwork} 2>/dev/null || true`,
+    );
+
+    const networks = await listFrostNetworks();
+    expect(networks).not.toContain(unlabeledNetwork);
+
+    await execAsync(
+      `docker network rm ${unlabeledNetwork} 2>/dev/null || true`,
+    );
+  });
+
   test("isNetworkInUse detects containers attached", async () => {
-    await createNetwork(TEST_NETWORK);
+    await createNetwork(TEST_NETWORK, TEST_LABELS);
 
     const notInUse = await isNetworkInUse(TEST_NETWORK);
     expect(notInUse).toBe(false);
@@ -104,6 +158,7 @@ describe("cleanup docker functions", () => {
       containerPort: 3000,
       name: `${TEST_PREFIX}-net-test`,
       network: TEST_NETWORK,
+      labels: TEST_LABELS,
     });
 
     const inUse = await isNetworkInUse(TEST_NETWORK);
@@ -113,7 +168,7 @@ describe("cleanup docker functions", () => {
   }, 30000);
 
   test("removeNetwork deletes unused network", async () => {
-    await createNetwork(TEST_NETWORK);
+    await createNetwork(TEST_NETWORK, TEST_LABELS);
 
     const before = await listFrostNetworks();
     expect(before).toContain(TEST_NETWORK);

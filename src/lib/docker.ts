@@ -18,12 +18,38 @@ export interface RunResult {
   error?: string;
 }
 
+export interface BuildImageOptions {
+  repoPath: string;
+  imageName: string;
+  dockerfilePath?: string;
+  envVars?: Record<string, string>;
+  labels?: Record<string, string>;
+}
+
 export async function buildImage(
-  repoPath: string,
-  imageName: string,
-  dockerfilePath: string = "Dockerfile",
-  envVars?: Record<string, string>,
+  optionsOrRepoPath: BuildImageOptions | string,
+  imageNameArg?: string,
+  dockerfilePathArg: string = "Dockerfile",
+  envVarsArg?: Record<string, string>,
 ): Promise<BuildResult> {
+  const options: BuildImageOptions =
+    typeof optionsOrRepoPath === "string"
+      ? {
+          repoPath: optionsOrRepoPath,
+          imageName: imageNameArg!,
+          dockerfilePath: dockerfilePathArg,
+          envVars: envVarsArg,
+        }
+      : optionsOrRepoPath;
+
+  const {
+    repoPath,
+    imageName,
+    dockerfilePath = "Dockerfile",
+    envVars,
+    labels,
+  } = options;
+
   return new Promise((resolve) => {
     let log = "";
     const buildContext = join(repoPath, dirname(dockerfilePath));
@@ -31,6 +57,11 @@ export async function buildImage(
     if (envVars) {
       for (const [key, value] of Object.entries(envVars)) {
         args.push("--build-arg", `${key}=${value}`);
+      }
+    }
+    if (labels) {
+      for (const [key, value] of Object.entries(labels)) {
+        args.push("--label", `${key}=${value}`);
       }
     }
     args.push(".");
@@ -107,6 +138,7 @@ export interface RunContainerOptions {
   envVars?: Record<string, string>;
   network?: string;
   hostname?: string;
+  labels?: Record<string, string>;
 }
 
 export async function runContainer(
@@ -120,6 +152,7 @@ export async function runContainer(
     envVars,
     network,
     hostname,
+    labels,
   } = options;
   try {
     await stopContainer(name);
@@ -130,9 +163,14 @@ export async function runContainer(
       .join(" ");
     const networkFlag = network ? `--network ${network}` : "";
     const hostnameFlag = hostname ? `--hostname ${hostname}` : "";
+    const labelFlags = labels
+      ? Object.entries(labels)
+          .map(([k, v]) => `--label ${k}=${JSON.stringify(v)}`)
+          .join(" ")
+      : "";
     const logOpts = "--log-opt max-size=10m --log-opt max-file=3";
     const { stdout } = await execAsync(
-      `docker run -d --restart on-failure:5 ${logOpts} --name ${name} -p ${hostPort}:${containerPort} ${networkFlag} ${hostnameFlag} ${envFlags} ${imageName}`.replace(
+      `docker run -d --restart on-failure:5 ${logOpts} --name ${name} -p ${hostPort}:${containerPort} ${networkFlag} ${hostnameFlag} ${labelFlags} ${envFlags} ${imageName}`.replace(
         /\s+/g,
         " ",
       ),
@@ -265,10 +303,18 @@ export async function networkExists(name: string): Promise<boolean> {
   }
 }
 
-export async function createNetwork(name: string): Promise<void> {
+export async function createNetwork(
+  name: string,
+  labels?: Record<string, string>,
+): Promise<void> {
   const exists = await networkExists(name);
   if (!exists) {
-    await execAsync(`docker network create ${name}`);
+    const labelFlags = labels
+      ? Object.entries(labels)
+          .map(([k, v]) => `--label ${k}=${JSON.stringify(v)}`)
+          .join(" ")
+      : "";
+    await execAsync(`docker network create ${labelFlags} ${name}`.trim());
   }
 }
 
@@ -333,7 +379,7 @@ export function streamContainerLogs(
 export async function listFrostImages(): Promise<string[]> {
   try {
     const { stdout } = await execAsync(
-      `docker images --format '{{.Repository}}:{{.Tag}}' | grep '^frost-' || true`,
+      `docker images --filter "label=frost.managed=true" --format '{{.Repository}}:{{.Tag}}'`,
     );
     return stdout.trim().split("\n").filter(Boolean);
   } catch {
@@ -398,7 +444,7 @@ export async function pruneDanglingImages(): Promise<{
 export async function listFrostNetworks(): Promise<string[]> {
   try {
     const { stdout } = await execAsync(
-      `docker network ls --format '{{.Name}}' | grep '^frost-net-' || true`,
+      `docker network ls --filter "label=frost.managed=true" --format '{{.Name}}'`,
     );
     return stdout.trim().split("\n").filter(Boolean);
   } catch {
@@ -421,7 +467,7 @@ export async function isNetworkInUse(name: string): Promise<boolean> {
 export async function pruneStoppedContainers(): Promise<number> {
   try {
     const { stdout } = await execAsync(
-      `docker ps -a --filter "status=exited" --filter "name=^frost-" --format '{{.Names}}'`,
+      `docker ps -a --filter "status=exited" --filter "label=frost.managed=true" --format '{{.Names}}'`,
     );
     const containers = stdout.trim().split("\n").filter(Boolean);
     for (const name of containers) {
