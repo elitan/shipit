@@ -313,6 +313,11 @@ echo "SSL enable result: $SSL_SUCCESS"
 echo "Waiting for Caddy to stabilize..."
 sleep 10
 
+# After SSL is enabled, Caddy redirects HTTP to HTTPS on port 80
+# Use port 3000 directly for remaining tests to bypass the redirect
+BASE_URL="http://$SERVER_IP:3000"
+echo "Switched to direct port 3000 for API calls"
+
 echo ""
 echo "=== Test 18: Create service and check system domain ==="
 PROJECT5=$(api -X POST "$BASE_URL/api/projects" -d '{"name":"e2e-domain"}')
@@ -325,12 +330,8 @@ SERVICE5_ID=$(echo "$SERVICE5" | jq -r '.id')
 echo "Created service: $SERVICE5_ID"
 
 echo "Calling deploy API for service $SERVICE5_ID..."
-DEPLOY5_RESP=$(curl -sS --max-time 30 -w "\nHTTP_STATUS:%{http_code}" \
-  -H "X-Frost-Token: $API_KEY" -H "Content-Type: application/json" \
-  -X POST "$BASE_URL/api/services/$SERVICE5_ID/deploy")
-DEPLOY5=$(echo "$DEPLOY5_RESP" | sed '/^HTTP_STATUS:/d')
-HTTP_STATUS=$(echo "$DEPLOY5_RESP" | grep "HTTP_STATUS:" | cut -d: -f2)
-echo "Deploy response (HTTP $HTTP_STATUS): $DEPLOY5"
+DEPLOY5=$(api -X POST "$BASE_URL/api/services/$SERVICE5_ID/deploy")
+echo "Deploy response: $DEPLOY5"
 DEPLOY5_ID=$(echo "$DEPLOY5" | jq -r '.deployment_id')
 if [ "$DEPLOY5_ID" = "null" ] || [ -z "$DEPLOY5_ID" ]; then
   echo "Deploy failed - deployment_id is null or empty"
