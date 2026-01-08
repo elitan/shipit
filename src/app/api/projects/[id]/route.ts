@@ -104,34 +104,11 @@ export async function DELETE(
 ) {
   const { id } = await params;
 
-  // Debug: log state before delete
-  const servicesBefore = await db
-    .selectFrom("services")
-    .select(["id", "name"])
-    .where("projectId", "=", id)
-    .execute();
-  console.log(
-    `[DELETE project ${id}] Services before delete: ${JSON.stringify(servicesBefore)}`,
-  );
-
-  const domainsBefore = await db
-    .selectFrom("domains")
-    .innerJoin("services", "services.id", "domains.serviceId")
-    .select(["domains.id", "domains.domain", "domains.serviceId"])
-    .where("services.projectId", "=", id)
-    .execute();
-  console.log(
-    `[DELETE project ${id}] Domains before delete: ${JSON.stringify(domainsBefore)}`,
-  );
-
   const deployments = await db
     .selectFrom("deployments")
-    .select(["id", "containerId", "status"])
+    .select(["id", "containerId"])
     .where("projectId", "=", id)
     .execute();
-  console.log(
-    `[DELETE project ${id}] Deployments before delete: ${JSON.stringify(deployments.map((d) => ({ id: d.id, status: d.status })))}`,
-  );
 
   for (const deployment of deployments) {
     if (deployment.containerId) {
@@ -142,23 +119,6 @@ export async function DELETE(
   await removeNetwork(`frost-net-${id}`.toLowerCase());
 
   await db.deleteFrom("projects").where("id", "=", id).execute();
-
-  // Debug: verify cascade delete worked
-  const domainsAfter = await db
-    .selectFrom("domains")
-    .select(["id", "domain"])
-    .execute();
-  console.log(
-    `[DELETE project ${id}] All domains after delete: ${JSON.stringify(domainsAfter)}`,
-  );
-
-  const deploymentsAfter = await db
-    .selectFrom("deployments")
-    .select(["id", "status"])
-    .execute();
-  console.log(
-    `[DELETE project ${id}] All deployments after delete: ${JSON.stringify(deploymentsAfter)}`,
-  );
 
   return NextResponse.json({ success: true });
 }
