@@ -135,8 +135,8 @@ jobs:
       - name: Collect logs on failure
         if: failure()
         run: |
-          echo "=== Frost logs ==="
-          ssh root@${{ steps.server.outputs.ip }} "journalctl -u frost --no-pager -n 100" || true
+          echo "=== Frost logs (last 500 lines) ==="
+          ssh root@${{ steps.server.outputs.ip }} "journalctl -u frost --no-pager -n 500" || true
           echo ""
           echo "=== Caddy logs ==="
           ssh root@${{ steps.server.outputs.ip }} "journalctl -u caddy --no-pager -n 50" || true

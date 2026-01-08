@@ -386,6 +386,25 @@ export async function syncCaddyConfig() {
     return;
   }
 
+  // Debug: log all domains in database
+  const allDomains = await db
+    .selectFrom("domains")
+    .select(["id", "domain", "serviceId", "dnsVerified"])
+    .execute();
+  console.log(
+    `[syncCaddyConfig] All domains in DB: ${JSON.stringify(allDomains.map((d) => ({ domain: d.domain, serviceId: d.serviceId, dnsVerified: d.dnsVerified })))}`,
+  );
+
+  // Debug: log all running deployments
+  const runningDeployments = await db
+    .selectFrom("deployments")
+    .select(["id", "serviceId", "status", "hostPort"])
+    .where("status", "=", "running")
+    .execute();
+  console.log(
+    `[syncCaddyConfig] Running deployments: ${JSON.stringify(runningDeployments.map((d) => ({ id: d.id, serviceId: d.serviceId, hostPort: d.hostPort })))}`,
+  );
+
   const verifiedDomains = await db
     .selectFrom("domains")
     .innerJoin("services", "services.id", "domains.serviceId")
@@ -403,6 +422,10 @@ export async function syncCaddyConfig() {
     ])
     .where("domains.dnsVerified", "=", 1)
     .execute();
+
+  console.log(
+    `[syncCaddyConfig] Verified domains with running deployments: ${JSON.stringify(verifiedDomains.map((d) => d.domain))}`,
+  );
 
   const routes: DomainRoute[] = [];
 
