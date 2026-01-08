@@ -158,18 +158,15 @@ FRONTEND_ID=$(echo "$FRONTEND" | jq -r '.id')
 echo "Created frontend service: $FRONTEND_ID"
 
 echo ""
-echo "=== Test 8: Deploy both services ==="
+echo "=== Test 8: Deploy both services (sequentially to avoid port collision) ==="
 DEPLOY_BACKEND=$(api -X POST "$BASE_URL/api/services/$BACKEND_ID/deploy")
 DEPLOY_BACKEND_ID=$(echo "$DEPLOY_BACKEND" | jq -r '.deployment_id')
 echo "Started backend deployment: $DEPLOY_BACKEND_ID"
+wait_for_deployment "$DEPLOY_BACKEND_ID"
 
 DEPLOY_FRONTEND=$(api -X POST "$BASE_URL/api/services/$FRONTEND_ID/deploy")
 DEPLOY_FRONTEND_ID=$(echo "$DEPLOY_FRONTEND" | jq -r '.deployment_id')
 echo "Started frontend deployment: $DEPLOY_FRONTEND_ID"
-
-echo "Waiting for backend..."
-wait_for_deployment "$DEPLOY_BACKEND_ID"
-echo "Waiting for frontend..."
 wait_for_deployment "$DEPLOY_FRONTEND_ID"
 
 echo ""
