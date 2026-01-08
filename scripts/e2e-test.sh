@@ -310,6 +310,8 @@ SSL_RESULT=$(api -X POST "$BASE_URL/api/settings/enable-ssl" \
   -d "{\"domain\":\"$FROST_DOMAIN\",\"email\":\"test@example.com\",\"staging\":true}")
 SSL_SUCCESS=$(echo "$SSL_RESULT" | jq -r '.success // .error')
 echo "SSL enable result: $SSL_SUCCESS"
+echo "Waiting for Caddy to stabilize..."
+sleep 10
 
 echo ""
 echo "=== Test 18: Create service and check system domain ==="
