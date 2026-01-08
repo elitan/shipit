@@ -45,20 +45,24 @@ jobs:
       - name: Wait for rebuild
         run: |
           echo "Waiting for rebuild to complete..."
+          echo "Action ID: ${{ steps.rebuild.outputs.action_id }}"
           for i in {1..60}; do
-            STATUS=$(curl -s \
+            RESPONSE=$(curl -s \
               -H "Authorization: Bearer ${{ secrets.HETZNER_API_TOKEN }}" \
-              "https://api.hetzner.cloud/v1/servers/${{ env.SERVER_ID }}/actions/${{ steps.rebuild.outputs.action_id }}" \
-              | jq -r '.action.status')
+              "https://api.hetzner.cloud/v1/servers/${{ env.SERVER_ID }}/actions/${{ steps.rebuild.outputs.action_id }}")
 
-            echo "Rebuild status: $STATUS"
+            STATUS=$(echo "$RESPONSE" | jq -r '.action.status' 2>/dev/null || echo "unknown")
+            echo "Attempt $i - Rebuild status: $STATUS"
 
             if [ "$STATUS" = "success" ]; then
               echo "Rebuild complete!"
               break
             elif [ "$STATUS" = "error" ]; then
               echo "Rebuild failed!"
+              echo "$RESPONSE" | jq
               exit 1
+            elif [ "$STATUS" = "unknown" ]; then
+              echo "API response: $RESPONSE"
             fi
 
             sleep 5
