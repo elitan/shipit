@@ -16,6 +16,45 @@ api() {
   curl -s -H "X-Frost-Token: $API_KEY" -H "Content-Type: application/json" "$@"
 }
 
+wait_for_deployment() {
+  local DEPLOYMENT_ID=$1
+  local MAX=${2:-30}
+  for i in $(seq 1 $MAX); do
+    STATUS=$(api "$BASE_URL/api/deployments/$DEPLOYMENT_ID" | jq -r '.status')
+    echo "  Status: $STATUS"
+    if [ "$STATUS" = "running" ]; then
+      return 0
+    elif [ "$STATUS" = "failed" ]; then
+      echo "Deployment failed!"
+      api "$BASE_URL/api/deployments/$DEPLOYMENT_ID" | jq
+      return 1
+    fi
+    sleep 5
+  done
+  echo "Deployment timed out"
+  return 1
+}
+
+wait_for_ssl() {
+  local DOMAIN_ID=$1
+  local MAX=${2:-24}
+  for i in $(seq 1 $MAX); do
+    RESULT=$(api -X POST "$BASE_URL/api/domains/$DOMAIN_ID/verify-ssl")
+    SSL_STATUS=$(echo "$RESULT" | jq -r '.status // .working')
+    echo "  SSL status: $SSL_STATUS"
+    if [ "$SSL_STATUS" = "active" ] || [ "$SSL_STATUS" = "true" ]; then
+      return 0
+    fi
+    sleep 5
+  done
+  echo "SSL verification timed out"
+  return 1
+}
+
+remote() {
+  ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR root@$SERVER_IP "$@"
+}
+
 echo ""
 echo "=== Test 1: Create project ==="
 PROJECT=$(api -X POST "$BASE_URL/api/projects" -d '{"name":"e2e-test"}')
@@ -95,6 +134,227 @@ fi
 echo ""
 echo "=== Test 6: Cleanup - delete project ==="
 DELETE_RESULT=$(api -X DELETE "$BASE_URL/api/projects/$PROJECT_ID")
+echo "Deleted project"
+
+echo ""
+echo "########################################"
+echo "# Test Group 2: Multi-service networking"
+echo "########################################"
+
+echo ""
+echo "=== Test 7: Create project with two services ==="
+PROJECT2=$(api -X POST "$BASE_URL/api/projects" -d '{"name":"e2e-multiservice"}')
+PROJECT2_ID=$(echo "$PROJECT2" | jq -r '.id')
+echo "Created project: $PROJECT2_ID"
+
+BACKEND=$(api -X POST "$BASE_URL/api/projects/$PROJECT2_ID/services" \
+  -d '{"name":"backend","deployType":"image","imageUrl":"nginx:alpine","containerPort":80}')
+BACKEND_ID=$(echo "$BACKEND" | jq -r '.id')
+echo "Created backend service: $BACKEND_ID"
+
+FRONTEND=$(api -X POST "$BASE_URL/api/projects/$PROJECT2_ID/services" \
+  -d '{"name":"frontend","deployType":"image","imageUrl":"nginx:alpine","containerPort":80}')
+FRONTEND_ID=$(echo "$FRONTEND" | jq -r '.id')
+echo "Created frontend service: $FRONTEND_ID"
+
+echo ""
+echo "=== Test 8: Deploy both services ==="
+DEPLOY_BACKEND=$(api -X POST "$BASE_URL/api/services/$BACKEND_ID/deploy")
+DEPLOY_BACKEND_ID=$(echo "$DEPLOY_BACKEND" | jq -r '.deployment_id')
+echo "Started backend deployment: $DEPLOY_BACKEND_ID"
+
+DEPLOY_FRONTEND=$(api -X POST "$BASE_URL/api/services/$FRONTEND_ID/deploy")
+DEPLOY_FRONTEND_ID=$(echo "$DEPLOY_FRONTEND" | jq -r '.deployment_id')
+echo "Started frontend deployment: $DEPLOY_FRONTEND_ID"
+
+echo "Waiting for backend..."
+wait_for_deployment "$DEPLOY_BACKEND_ID"
+echo "Waiting for frontend..."
+wait_for_deployment "$DEPLOY_FRONTEND_ID"
+
+echo ""
+echo "=== Test 9: Verify inter-service communication ==="
+CURL_RESULT=$(remote "docker run --rm --network frost-net-$PROJECT2_ID curlimages/curl -sf http://backend:80")
+if echo "$CURL_RESULT" | grep -q "nginx"; then
+  echo "Inter-service communication works!"
+else
+  echo "Inter-service communication failed"
+  echo "Result: $CURL_RESULT"
+  exit 1
+fi
+
+echo ""
+echo "=== Test 10: Cleanup multi-service project ==="
+api -X DELETE "$BASE_URL/api/projects/$PROJECT2_ID" > /dev/null
+echo "Deleted project"
+
+echo ""
+echo "########################################"
+echo "# Test Group 3: Env var inheritance"
+echo "########################################"
+
+echo ""
+echo "=== Test 11: Create project with env vars ==="
+PROJECT3=$(api -X POST "$BASE_URL/api/projects" \
+  -d '{"name":"e2e-envtest","envVars":[{"key":"SHARED","value":"from-project"},{"key":"PROJECT_ONLY","value":"proj-val"}]}')
+PROJECT3_ID=$(echo "$PROJECT3" | jq -r '.id')
+echo "Created project with env vars: $PROJECT3_ID"
+
+SERVICE3=$(api -X POST "$BASE_URL/api/projects/$PROJECT3_ID/services" \
+  -d '{"name":"envcheck","deployType":"image","imageUrl":"nginx:alpine","containerPort":80,"envVars":[{"key":"SHARED","value":"from-service"},{"key":"SERVICE_ONLY","value":"svc-val"}]}')
+SERVICE3_ID=$(echo "$SERVICE3" | jq -r '.id')
+echo "Created service with env vars: $SERVICE3_ID"
+
+echo ""
+echo "=== Test 12: Deploy and verify env vars ==="
+DEPLOY3=$(api -X POST "$BASE_URL/api/services/$SERVICE3_ID/deploy")
+DEPLOY3_ID=$(echo "$DEPLOY3" | jq -r '.deployment_id')
+wait_for_deployment "$DEPLOY3_ID"
+
+CONTAINER_NAME="frost-$SERVICE3_ID"
+SHARED_VAL=$(remote "docker exec $CONTAINER_NAME printenv SHARED")
+PROJECT_ONLY_VAL=$(remote "docker exec $CONTAINER_NAME printenv PROJECT_ONLY")
+SERVICE_ONLY_VAL=$(remote "docker exec $CONTAINER_NAME printenv SERVICE_ONLY")
+
+echo "SHARED=$SHARED_VAL (expected: from-service)"
+echo "PROJECT_ONLY=$PROJECT_ONLY_VAL (expected: proj-val)"
+echo "SERVICE_ONLY=$SERVICE_ONLY_VAL (expected: svc-val)"
+
+if [ "$SHARED_VAL" != "from-service" ]; then
+  echo "FAILED: SHARED should be 'from-service' (service overrides project)"
+  exit 1
+fi
+if [ "$PROJECT_ONLY_VAL" != "proj-val" ]; then
+  echo "FAILED: PROJECT_ONLY should be 'proj-val'"
+  exit 1
+fi
+if [ "$SERVICE_ONLY_VAL" != "svc-val" ]; then
+  echo "FAILED: SERVICE_ONLY should be 'svc-val'"
+  exit 1
+fi
+echo "Env var inheritance works!"
+
+echo ""
+echo "=== Test 13: Cleanup env test project ==="
+api -X DELETE "$BASE_URL/api/projects/$PROJECT3_ID" > /dev/null
+echo "Deleted project"
+
+echo ""
+echo "########################################"
+echo "# Test Group 4: Service update + redeploy"
+echo "########################################"
+
+echo ""
+echo "=== Test 14: Create service, deploy, update, redeploy ==="
+PROJECT4=$(api -X POST "$BASE_URL/api/projects" -d '{"name":"e2e-update"}')
+PROJECT4_ID=$(echo "$PROJECT4" | jq -r '.id')
+echo "Created project: $PROJECT4_ID"
+
+SERVICE4=$(api -X POST "$BASE_URL/api/projects/$PROJECT4_ID/services" \
+  -d '{"name":"updatetest","deployType":"image","imageUrl":"nginx:alpine","containerPort":80}')
+SERVICE4_ID=$(echo "$SERVICE4" | jq -r '.id')
+echo "Created service: $SERVICE4_ID"
+
+DEPLOY4=$(api -X POST "$BASE_URL/api/services/$SERVICE4_ID/deploy")
+DEPLOY4_ID=$(echo "$DEPLOY4" | jq -r '.deployment_id')
+wait_for_deployment "$DEPLOY4_ID"
+
+HOST_PORT4=$(api "$BASE_URL/api/deployments/$DEPLOY4_ID" | jq -r '.hostPort')
+RESPONSE1=$(curl -sf "http://$SERVER_IP:$HOST_PORT4")
+if echo "$RESPONSE1" | grep -q "nginx"; then
+  echo "v1 (nginx) deployed successfully"
+else
+  echo "v1 deployment check failed"
+  exit 1
+fi
+
+echo ""
+echo "=== Test 15: Update service to httpd and redeploy ==="
+api -X PATCH "$BASE_URL/api/services/$SERVICE4_ID" \
+  -d '{"imageUrl":"httpd:alpine","containerPort":80}' > /dev/null
+
+DEPLOY4B=$(api -X POST "$BASE_URL/api/services/$SERVICE4_ID/deploy")
+DEPLOY4B_ID=$(echo "$DEPLOY4B" | jq -r '.deployment_id')
+wait_for_deployment "$DEPLOY4B_ID"
+
+HOST_PORT4B=$(api "$BASE_URL/api/deployments/$DEPLOY4B_ID" | jq -r '.hostPort')
+RESPONSE2=$(curl -sf "http://$SERVER_IP:$HOST_PORT4B")
+if echo "$RESPONSE2" | grep -q "It works"; then
+  echo "v2 (httpd) deployed successfully"
+else
+  echo "v2 deployment check failed"
+  echo "Response: $RESPONSE2"
+  exit 1
+fi
+
+OLD_STATUS=$(api "$BASE_URL/api/deployments/$DEPLOY4_ID" | jq -r '.status')
+if [ "$OLD_STATUS" != "running" ]; then
+  echo "Old deployment correctly stopped (status: $OLD_STATUS)"
+else
+  echo "WARNING: Old deployment still running"
+fi
+
+echo ""
+echo "=== Test 16: Cleanup update test project ==="
+api -X DELETE "$BASE_URL/api/projects/$PROJECT4_ID" > /dev/null
+echo "Deleted project"
+
+echo ""
+echo "########################################"
+echo "# Test Group 5: Domain & SSL"
+echo "########################################"
+
+echo ""
+echo "=== Test 17: Create service and check system domain ==="
+PROJECT5=$(api -X POST "$BASE_URL/api/projects" -d '{"name":"e2e-domain"}')
+PROJECT5_ID=$(echo "$PROJECT5" | jq -r '.id')
+echo "Created project: $PROJECT5_ID"
+
+SERVICE5=$(api -X POST "$BASE_URL/api/projects/$PROJECT5_ID/services" \
+  -d '{"name":"domaintest","deployType":"image","imageUrl":"nginx:alpine","containerPort":80}')
+SERVICE5_ID=$(echo "$SERVICE5" | jq -r '.id')
+echo "Created service: $SERVICE5_ID"
+
+DEPLOY5=$(api -X POST "$BASE_URL/api/services/$SERVICE5_ID/deploy")
+DEPLOY5_ID=$(echo "$DEPLOY5" | jq -r '.deployment_id')
+wait_for_deployment "$DEPLOY5_ID"
+
+DOMAINS=$(api "$BASE_URL/api/services/$SERVICE5_ID/domains")
+SYSTEM_DOMAIN=$(echo "$DOMAINS" | jq -r '.[0].domain')
+DOMAIN_ID=$(echo "$DOMAINS" | jq -r '.[0].id')
+echo "System domain: $SYSTEM_DOMAIN"
+
+if [ "$SYSTEM_DOMAIN" = "null" ] || [ -z "$SYSTEM_DOMAIN" ]; then
+  echo "No system domain found, skipping SSL tests"
+else
+  echo ""
+  echo "=== Test 18: Verify DNS ==="
+  DNS_RESULT=$(api -X POST "$BASE_URL/api/domains/$DOMAIN_ID/verify-dns")
+  DNS_VALID=$(echo "$DNS_RESULT" | jq -r '.valid')
+  echo "DNS valid: $DNS_VALID"
+
+  if [ "$DNS_VALID" = "true" ]; then
+    echo ""
+    echo "=== Test 19: Wait for SSL ==="
+    if wait_for_ssl "$DOMAIN_ID"; then
+      echo ""
+      echo "=== Test 20: Verify HTTPS works ==="
+      if curl -sfk "https://$SYSTEM_DOMAIN" > /dev/null; then
+        echo "HTTPS proxy works!"
+      else
+        echo "HTTPS request failed (non-fatal, cert may still be provisioning)"
+      fi
+    else
+      echo "SSL verification timed out (non-fatal)"
+    fi
+  else
+    echo "DNS not valid, skipping SSL tests"
+  fi
+fi
+
+echo ""
+echo "=== Test 21: Cleanup domain test project ==="
+api -X DELETE "$BASE_URL/api/projects/$PROJECT5_ID" > /dev/null
 echo "Deleted project"
 
 echo ""
