@@ -304,7 +304,15 @@ echo "# Test Group 5: Domain & SSL"
 echo "########################################"
 
 echo ""
-echo "=== Test 17: Create service and check system domain ==="
+echo "=== Test 17: Enable SSL with staging certs ==="
+FROST_DOMAIN="frost.$SERVER_IP.sslip.io"
+SSL_RESULT=$(api -X POST "$BASE_URL/api/settings/enable-ssl" \
+  -d "{\"domain\":\"$FROST_DOMAIN\",\"email\":\"test@example.com\",\"staging\":true}")
+SSL_SUCCESS=$(echo "$SSL_RESULT" | jq -r '.success // .error')
+echo "SSL enable result: $SSL_SUCCESS"
+
+echo ""
+echo "=== Test 18: Create service and check system domain ==="
 PROJECT5=$(api -X POST "$BASE_URL/api/projects" -d '{"name":"e2e-domain"}')
 PROJECT5_ID=$(echo "$PROJECT5" | jq -r '.id')
 echo "Created project: $PROJECT5_ID"
@@ -327,17 +335,17 @@ if [ "$SYSTEM_DOMAIN" = "null" ] || [ -z "$SYSTEM_DOMAIN" ]; then
   echo "No system domain found, skipping SSL tests"
 else
   echo ""
-  echo "=== Test 18: Verify DNS ==="
+  echo "=== Test 19: Verify DNS ==="
   DNS_RESULT=$(api -X POST "$BASE_URL/api/domains/$DOMAIN_ID/verify-dns")
   DNS_VALID=$(echo "$DNS_RESULT" | jq -r '.valid')
   echo "DNS valid: $DNS_VALID"
 
   if [ "$DNS_VALID" = "true" ]; then
     echo ""
-    echo "=== Test 19: Wait for SSL ==="
+    echo "=== Test 20: Wait for SSL ==="
     if wait_for_ssl "$DOMAIN_ID"; then
       echo ""
-      echo "=== Test 20: Verify HTTPS works ==="
+      echo "=== Test 21: Verify HTTPS works ==="
       if curl -sfk "https://$SYSTEM_DOMAIN" > /dev/null; then
         echo "HTTPS proxy works!"
       else
@@ -352,7 +360,7 @@ else
 fi
 
 echo ""
-echo "=== Test 21: Cleanup domain test project ==="
+echo "=== Test 22: Cleanup domain test project ==="
 api -X DELETE "$BASE_URL/api/projects/$PROJECT5_ID" > /dev/null
 echo "Deleted project"
 
