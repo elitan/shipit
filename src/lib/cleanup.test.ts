@@ -1,4 +1,4 @@
-import { describe, expect, mock, test } from "bun:test";
+import { describe, expect, test } from "bun:test";
 
 describe("cleanup utilities", () => {
   test("groups images by service prefix", () => {

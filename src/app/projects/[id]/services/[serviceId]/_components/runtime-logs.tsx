@@ -44,7 +44,7 @@ export function RuntimeLogs({ deploymentId }: RuntimeLogsProps) {
 
   useEffect(
     function scrollToBottom() {
-      if (autoScroll && containerRef.current) {
+      if (logs.length > 0 && autoScroll && containerRef.current) {
         containerRef.current.scrollTop = containerRef.current.scrollHeight;
       }
     },
@@ -91,7 +91,7 @@ export function RuntimeLogs({ deploymentId }: RuntimeLogsProps) {
           logs.map((line, i) => {
             const { timestamp, content } = parseLogLine(line);
             return (
-              <div key={i} className="leading-5">
+              <div key={`${i}-${line.slice(0, 50)}`} className="leading-5">
                 {timestamp && (
                   <span className="mr-3 text-neutral-600">
                     {formatTimestamp(timestamp)}
@@ -106,6 +106,7 @@ export function RuntimeLogs({ deploymentId }: RuntimeLogsProps) {
 
       {!autoScroll && logs.length > 0 && (
         <button
+          type="button"
           onClick={() => {
             setAutoScroll(true);
             if (containerRef.current) {

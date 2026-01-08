@@ -332,6 +332,7 @@ export default function ServicePage() {
                     <CardTitle className="flex items-center justify-between text-sm font-medium text-neutral-300">
                       <div className="flex items-center gap-4">
                         <button
+                          type="button"
                           onClick={() => setActiveLogTab("build")}
                           className={cn(
                             "border-b-2 pb-1 transition-colors",
@@ -344,6 +345,7 @@ export default function ServicePage() {
                         </button>
                         {selectedDeployment.status === "running" && (
                           <button
+                            type="button"
                             onClick={() => setActiveLogTab("runtime")}
                             className={cn(
                               "border-b-2 pb-1 transition-colors",
