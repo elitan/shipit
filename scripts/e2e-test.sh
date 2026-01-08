@@ -324,11 +324,12 @@ SERVICE5=$(api -X POST "$BASE_URL/api/projects/$PROJECT5_ID/services" \
 SERVICE5_ID=$(echo "$SERVICE5" | jq -r '.id')
 echo "Created service: $SERVICE5_ID"
 
+echo "Calling deploy API..."
 DEPLOY5=$(api -X POST "$BASE_URL/api/services/$SERVICE5_ID/deploy")
+echo "Deploy response: $DEPLOY5"
 DEPLOY5_ID=$(echo "$DEPLOY5" | jq -r '.deployment_id')
 if [ "$DEPLOY5_ID" = "null" ] || [ -z "$DEPLOY5_ID" ]; then
-  echo "Deploy failed:"
-  echo "$DEPLOY5" | jq
+  echo "Deploy failed - deployment_id is null or empty"
   exit 1
 fi
 echo "Started deployment: $DEPLOY5_ID"
