@@ -171,7 +171,8 @@ wait_for_deployment "$DEPLOY_FRONTEND_ID"
 
 echo ""
 echo "=== Test 9: Verify inter-service communication ==="
-CURL_RESULT=$(remote "docker run --rm --network frost-net-$PROJECT2_ID curlimages/curl -sf http://backend:80")
+NETWORK_NAME="frost-net-$(echo $PROJECT2_ID | tr '[:upper:]' '[:lower:]')"
+CURL_RESULT=$(remote "docker run --rm --network $NETWORK_NAME curlimages/curl -sf http://backend:80")
 if echo "$CURL_RESULT" | grep -q "nginx"; then
   echo "Inter-service communication works!"
 else
