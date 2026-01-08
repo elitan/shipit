@@ -137,8 +137,14 @@ export async function createSystemDomain(
   serviceName: string,
   projectName: string,
 ): Promise<void> {
-  const serverIp = await getSetting("server_ip");
-  if (!serverIp) return;
+  if (process.env.NODE_ENV === "development") return;
+
+  let serverIp: string;
+  try {
+    serverIp = await getServerIp();
+  } catch {
+    return;
+  }
 
   let domain: string | null = null;
   for (let i = 0; i < 10; i++) {
@@ -187,11 +193,17 @@ export async function updateSystemDomain(
   newServiceName: string,
   newProjectName: string,
 ): Promise<void> {
+  if (process.env.NODE_ENV === "development") return;
+
   const existing = await getSystemDomainForService(serviceId);
   if (!existing) return;
 
-  const serverIp = await getSetting("server_ip");
-  if (!serverIp) return;
+  let serverIp: string;
+  try {
+    serverIp = await getServerIp();
+  } catch {
+    return;
+  }
 
   let domain: string | null = null;
   for (let i = 0; i < 10; i++) {

@@ -1,9 +1,12 @@
 import { Database } from "bun:sqlite";
 import { existsSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { getSetting } from "../src/lib/auth";
 import { db } from "../src/lib/db";
-import { createSystemDomain, getSystemDomainForService } from "../src/lib/domains";
+import {
+  createSystemDomain,
+  getServerIp,
+  getSystemDomainForService,
+} from "../src/lib/domains";
 
 const DB_PATH = join(process.cwd(), "data", "frost.db");
 
@@ -90,11 +93,19 @@ if (appliedCount === 0) {
 sqlite.close();
 
 async function ensureSystemDomains() {
-  const serverIp = await getSetting("server_ip");
-  if (!serverIp) {
-    console.log("No server_ip configured, skipping system domain creation");
+  if (process.env.NODE_ENV === "development") {
+    console.log("Development mode, skipping system domain creation");
     return;
   }
+
+  let serverIp: string;
+  try {
+    serverIp = await getServerIp();
+  } catch {
+    console.log("Could not determine server IP, skipping system domain creation");
+    return;
+  }
+  console.log(`Server IP: ${serverIp}`);
 
   const services = await db
     .selectFrom("services")
