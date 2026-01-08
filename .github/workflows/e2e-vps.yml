@@ -97,8 +97,9 @@ jobs:
           INSTALL_URL="https://raw.githubusercontent.com/${REPO}/${BRANCH}/install.sh"
 
           echo "Installing from: $INSTALL_URL"
+          echo "Using branch: $BRANCH"
 
-          OUTPUT=$(ssh root@${{ steps.server.outputs.ip }} "curl -fsSL '$INSTALL_URL' -o /tmp/install.sh && chmod +x /tmp/install.sh && echo '${{ secrets.FROST_TEST_PASSWORD }}' | /tmp/install.sh" 2>&1)
+          OUTPUT=$(ssh root@${{ steps.server.outputs.ip }} "curl -fsSL '$INSTALL_URL' -o /tmp/install.sh && chmod +x /tmp/install.sh && echo '${{ secrets.FROST_TEST_PASSWORD }}' | /tmp/install.sh -b '$BRANCH'" 2>&1)
 
           echo "$OUTPUT"
 

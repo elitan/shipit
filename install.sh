@@ -9,11 +9,13 @@ NC='\033[0m'
 FROST_DIR="/opt/frost"
 FROST_REPO="https://github.com/elitan/frost.git"
 FROST_VERSION=""
+FROST_BRANCH=""
 
-while getopts "v:" opt; do
+while getopts "v:b:" opt; do
   case $opt in
     v) FROST_VERSION="$OPTARG" ;;
-    *) echo "Usage: $0 [-v version]"; exit 1 ;;
+    b) FROST_BRANCH="$OPTARG" ;;
+    *) echo "Usage: $0 [-v version] [-b branch]"; exit 1 ;;
   esac
 done
 
@@ -120,7 +122,12 @@ if [ -d "$FROST_DIR" ]; then
 fi
 
 echo "Cloning Frost..."
-git clone "$FROST_REPO" "$FROST_DIR"
+if [ -n "$FROST_BRANCH" ]; then
+  echo "Using branch: $FROST_BRANCH"
+  git clone -b "$FROST_BRANCH" "$FROST_REPO" "$FROST_DIR"
+else
+  git clone "$FROST_REPO" "$FROST_DIR"
+fi
 git config --global --add safe.directory "$FROST_DIR"
 cd "$FROST_DIR"
 
