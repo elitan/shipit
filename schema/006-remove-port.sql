@@ -3,7 +3,7 @@ PRAGMA foreign_keys = OFF;
 
 CREATE TABLE services_new (
   id TEXT PRIMARY KEY,
-  project_id TEXT NOT NULL,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   deploy_type TEXT NOT NULL DEFAULT 'repo',
   repo_url TEXT,
